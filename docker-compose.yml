@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./frontend:/app
+    stdin_open: true
+    tty: true
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    stdin_open: true
+    tty: true
