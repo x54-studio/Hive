@@ -1,22 +1,23 @@
-import React, { useEffect, useState } from "react";
+import logo from './logo.svg';
+import './App.css';
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    // Call the backend API
-    fetch("http://127.0.0.1:5000/") // Backend URL
-      .then((response) => response.json())
-      .then((data) => {
-        setMessage(data.message); // Assuming the backend sends { "message": "Backend is running!" }
-      })
-      .catch((error) => console.error("Error fetching data:", error));
-  }, []); // Empty dependency array ensures it runs once on component mount.
-
   return (
     <div className="App">
-      <h1>Hive Frontend</h1>
-      <p>Backend Response: {message}</p>
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.js</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
     </div>
   );
 }

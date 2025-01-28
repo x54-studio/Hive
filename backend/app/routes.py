@@ -1,6 +1,11 @@
-from app import app  # Import the `app` object from `__init__.py`
-from flask import jsonify
+from flask import Blueprint, jsonify
 
-@app.route("/")
+main = Blueprint('main', __name__)
+
+@main.route("/")
 def home():
-    return jsonify({"message": "Backend is running!"})
+    return jsonify({"message": "Welcome to Hive!"})
+
+@main.route("/api/articles")
+def get_articles():
+    return jsonify({"articles": []})
