@@ -1,19 +1,30 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-    stdin_open: true
-    tty: true
   backend:
-    build:
-      context: ./backend
+    build: ./backend
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
-    stdin_open: true
-    tty: true
+    environment:
+      - FLASK_ENV=development
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+
+#  mongodb:
+#    image: mongo
+#    container_name: mongo_db  # This is the correct name for the container
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - mongo_data:/data/db
+#
+#volumes:
+#  mongo_data:
+#

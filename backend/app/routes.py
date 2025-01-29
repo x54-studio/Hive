@@ -3,8 +3,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, Blueprint, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from .models import articles_collection
-from app.models import User
+from .models import User, users_collection, articles_collection
+from pymongo.errors import PyMongoError
 
 
 # Initialize the background scheduler
@@ -45,26 +45,38 @@ def get_articles():
 @main.route("/api/register", methods=["POST"])
 def register():
     data = request.json
-    existing_user = User.find_user_by_email(data["email"])
-    
-    if existing_user:
-        return jsonify({"error": "User already exists"}), 400
+    try:
+        existing_user = User.find_user_by_email(data["email"])
+        if existing_user:
+            return jsonify({"error": "User already exists"}), 400
 
-    User.create_user(data["username"], data["email"], data["password"])
-    return jsonify({"message": "User registered successfully!"}), 201
+        result = User.create_user(data["username"], data["email"], data["password"])
+        return jsonify(result), 201 if "message" in result else 500
+    except PyMongoError:
+        return jsonify({"error": "Database error, please try again later."}), 500
 
 
 @main.route("/api/login", methods=["POST"])
 def login():
     data = request.json
-    user = User.find_user_by_email(data["email"])
 
-    if user and bcrypt.checkpw(data["password"].encode("utf-8"), user["password"]):
-        access_token = create_access_token(identity={"username": user["username"], "role": user["role"]})
-        return jsonify(access_token=access_token)
+    try:
+        if users_collection is None:  # Fix boolean check
+            return jsonify({"error": "Database connection failed. Please try again later."}), 500
 
-    return jsonify({"error": "Invalid credentials"}), 401
+        user = User.find_user_by_email(data["email"])
+        if user is None:
+            return jsonify({"error": "Invalid credentials"}), 401
 
+        if bcrypt.checkpw(data["password"].encode("utf-8"), user["password"]):
+            access_token = create_access_token(identity={"username": user["username"], "role": user["role"]})
+            return jsonify(access_token=access_token)
+
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    except PyMongoError as e:
+        print(f"MongoDB Error: {e}")
+        return jsonify({"error": "Database error, please try again later."}), 500
 
 @main.route("/api/protected", methods=["GET"])
 @jwt_required()

@@ -6,6 +6,10 @@ from .models import articles_collection
 from .routes import main
 
 def initialize_articles():
+    if articles_collection is None:
+        print("MongoDB is not connected. Skipping article initialization.")
+        return
+    
     if articles_collection.count_documents({}) == 0:  # Check if collection is empty
         articles_collection.insert_many([
             {
@@ -30,7 +34,7 @@ jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config["JWT_SECRET_KEY"] = "your_secret_key"  # Set your JWT secret key here
+    app.config.from_object("app.config.Config")
     CORS(app)
     jwt.init_app(app)  # Initialize JWTManager with the Flask app
 
