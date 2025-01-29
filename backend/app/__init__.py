@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 from .models import articles_collection
 from .routes import main
 
@@ -32,6 +33,13 @@ def create_app():
     app.config["JWT_SECRET_KEY"] = "your_secret_key"  # Set your JWT secret key here
     CORS(app)
     jwt.init_app(app)  # Initialize JWTManager with the Flask app
+
+    SWAGGER_URL = '/api/docs'
+    API_URL = '/static/swagger.json'
+
+    swagger_ui = get_swaggerui_blueprint(SWAGGER_URL, API_URL)
+    app.register_blueprint(swagger_ui, url_prefix=SWAGGER_URL)
+
 
     # Initialize data
     initialize_articles()

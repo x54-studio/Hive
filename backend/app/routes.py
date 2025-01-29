@@ -1,11 +1,13 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, Blueprint, jsonify
+from flask_swagger_ui import get_swaggerui_blueprint
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from .models import articles_collection
 
 # Initialize the background scheduler
 scheduler = BackgroundScheduler()
 scheduler.start()
+
 
 # Define the main Blueprint for routing
 main = Blueprint('main', __name__)
