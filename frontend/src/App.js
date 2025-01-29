@@ -1,24 +1,21 @@
-import React, { useContext } from "react";
-import { AuthContext } from "./authContext";
+import React from "react";
+import { AuthProvider } from "./authContext";
+import { ArticleProvider } from "./articleContext";
 import Login from "./pages/Login";
+import AddArticle from "./components/AddArticle";
+import ArticleList from "./components/ArticleList";
 
 function App() {
-  const { user, logout } = useContext(AuthContext);
-
   return (
-    <div>
-      <nav className="bg-gray-800 text-white p-4 flex justify-between">
-        <h1>Hive</h1>
-        {user ? (
-          <button onClick={logout} className="bg-red-500 px-3 py-1">
-            Logout
-          </button>
-        ) : (
-          <a href="/login">Login</a>
-        )}
-      </nav>
-      {user ? <p>Welcome! You are logged in.</p> : <Login />}
-    </div>
+    <AuthProvider>
+      <ArticleProvider>
+        <div className="p-4">
+          <Login />
+          <AddArticle />
+          <ArticleList />
+        </div>
+      </ArticleProvider>
+    </AuthProvider>
   );
 }
 
