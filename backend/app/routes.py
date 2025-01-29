@@ -1,8 +1,11 @@
+import bcrypt
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, Blueprint, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from .models import articles_collection
+from app.models import User
+
 
 # Initialize the background scheduler
 scheduler = BackgroundScheduler()
@@ -39,40 +42,35 @@ def get_articles():
     return jsonify(articles)
 
 
+@main.route("/api/register", methods=["POST"])
+def register():
+    data = request.json
+    existing_user = User.find_user_by_email(data["email"])
+    
+    if existing_user:
+        return jsonify({"error": "User already exists"}), 400
+
+    User.create_user(data["username"], data["email"], data["password"])
+    return jsonify({"message": "User registered successfully!"}), 201
+
+
 @main.route("/api/login", methods=["POST"])
 def login():
-    """
-    Endpoint for user login.
-    Validates the username and password, and generates a JWT access token.
-    Note: This is a dummy implementation. Replace with real authentication logic.
-    Returns:
-        JSON response with the access token if successful,
-        or an error message if credentials are invalid.
-    """
-    # Extract username and password from request body
-    username = request.json.get("username")
-    password = request.json.get("password")
+    data = request.json
+    user = User.find_user_by_email(data["email"])
 
-    # Simple validation for demo purposes
-    if username == "admin" and password == "password":
-        # Create a JWT access token for the user
-        access_token = create_access_token(identity=username)
+    if user and bcrypt.checkpw(data["password"].encode("utf-8"), user["password"]):
+        access_token = create_access_token(identity={"username": user["username"], "role": user["role"]})
         return jsonify(access_token=access_token)
 
-    # Return error for invalid credentials
     return jsonify({"error": "Invalid credentials"}), 401
 
 
 @main.route("/api/protected", methods=["GET"])
-@jwt_required()  # Protect this endpoint with JWT authentication
+@jwt_required()
 def protected():
-    """
-    Example of a protected endpoint.
-    Only accessible to authenticated users with a valid JWT token.
-    Returns:
-        JSON message confirming access.
-    """
-    return jsonify(message="You have access!"), 200
+    current_user = get_jwt_identity()
+    return jsonify({"message": f"Hello {current_user['username']}! You have {current_user['role']} access."})
 
 
 # -------------------------
