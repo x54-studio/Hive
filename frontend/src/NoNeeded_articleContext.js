@@ -6,10 +6,11 @@ const ArticleProvider = ({ children }) => {
   const [articles, setArticles] = useState([]);
 
   useEffect(() => {
-    fetchArticles();
+    //fetchArticles();
   }, []);
 
   const fetchArticles = async () => {
+    console.log('fetchArticles');
     const response = await fetch("http://localhost:5000/api/articles");
     const data = await response.json();
     setArticles(data);

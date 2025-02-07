@@ -1,42 +1,27 @@
+import logging
+import signal
+import sys
+import time
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-from .models import articles_collection
-from .routes import main
+from .routes import main, scheduler
+from .models import client
 
-def initialize_articles():
-    if articles_collection is None:
-        print("MongoDB is not connected. Skipping article initialization.")
-        return
-    
-    if articles_collection.count_documents({}) == 0:  # Check if collection is empty
-        articles_collection.insert_many([
-            {
-                "title": "First News Article",
-                "content": "This is the content of the first news article.",
-                "author": "Admin",
-                "created_at": "2025-01-28",
-                "published_at": "2025-01-29",
-                "status": "published"
-            },
-            {
-                "title": "Second News Article",
-                "content": "This is the content of the second news article.",
-                "author": "Admin",
-                "created_at": "2025-01-28",
-                "published_at": "2025-01-30",
-                "status": "draft"
-            }
-        ])
-    
 jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "*"}})
     jwt.init_app(app)  # Initialize JWTManager with the Flask app
+
+    # Ensure logs are sent to console immediately
+    #handler = logging.StreamHandler(sys.stdout)
+    #handler.setLevel(logging.DEBUG)
+    #app.logger.addHandler(handler)
+    #app.logger.setLevel(logging.DEBUG)
 
     SWAGGER_URL = '/api/docs'
     API_URL = '/static/swagger.json'
@@ -45,14 +30,32 @@ def create_app():
     app.register_blueprint(swagger_ui, url_prefix=SWAGGER_URL)
 
 
-    # Initialize data
-    initialize_articles()
-
     with app.app_context():
         #from .routes import main # Import your routes
         app.register_blueprint(main)
+        # Graceful shutdown handler
+        def shutdown_handler(signum, frame):
+            print("🛑 Shutdown initiated...")
+
+            # Stop the scheduler
+            if scheduler:
+                print("⏳ Stopping scheduler...")
+                scheduler.shutdown(wait=False)
+                print("✅ Scheduler stopped.")
+
+            # Close MongoDB connection
+            if client:
+                print("🔌 Closing MongoDB connection...")
+                client.close()
+                print("✅ MongoDB connection closed.")
+
+            print("✅ Backend shutdown complete.")
+            sys.exit(0)
+
+        # Handle termination signals (Ctrl+C, Docker Stop, etc.)
+        signal.signal(signal.SIGINT, shutdown_handler)
+        signal.signal(signal.SIGTERM, shutdown_handler)
         return app
 
 
-
-
+print("herehererer")

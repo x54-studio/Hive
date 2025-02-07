@@ -6,9 +6,8 @@ import "./styles/index.css"; // Tailwind CSS styles
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>
+  // Remove <React.StrictMode> to prevent double renders
     <AuthProvider>
       <App />
     </AuthProvider>
-  </React.StrictMode>
 );
