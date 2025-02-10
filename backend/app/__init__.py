@@ -1,61 +1,41 @@
-import logging
+# __init__.py
+
 import signal
 import sys
-import time
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-from .routes import main, scheduler
-from .models import client
+from .routes import main  # our Blueprint with routes
+from .config import Config
 
 jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object("app.config.Config")
+    app.config.from_object(Config)
+
+    # Enable CORS for requests from the frontend (adjust origins as needed)
     CORS(app, supports_credentials=True, origins=["http://localhost:3000"], resources={r"/*": {"origins": "*"}})
-    jwt.init_app(app)  # Initialize JWTManager with the Flask app
+    jwt.init_app(app)
 
-    # Ensure logs are sent to console immediately
-    #handler = logging.StreamHandler(sys.stdout)
-    #handler.setLevel(logging.DEBUG)
-    #app.logger.addHandler(handler)
-    #app.logger.setLevel(logging.DEBUG)
-
+    # Set up Swagger UI for API documentation
     SWAGGER_URL = '/api/docs'
     API_URL = '/static/swagger.json'
-
     swagger_ui = get_swaggerui_blueprint(SWAGGER_URL, API_URL)
     app.register_blueprint(swagger_ui, url_prefix=SWAGGER_URL)
 
+    # Register the main blueprint containing our API routes
+    app.register_blueprint(main)
 
-    with app.app_context():
-        #from .routes import main # Import your routes
-        app.register_blueprint(main)
-        # Graceful shutdown handler
-        def shutdown_handler(signum, frame):
-            print("Shutdown initiated...")
+    # Optional: Graceful shutdown handler
+    def shutdown_handler(signum, frame):
+        print("Shutdown initiated...")
+        # Here you could close database connections, stop background jobs, etc.
+        print("Backend shutdown complete.")
+        sys.exit(0)
 
-            # Stop the scheduler
-            if scheduler:
-                print("Stopping scheduler...")
-                scheduler.shutdown(wait=False)
-                print("Scheduler stopped.")
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
 
-            # Close MongoDB connection
-            if client:
-                print("Closing MongoDB connection...")
-                client.close()
-                print("MongoDB connection closed.")
-
-            print("Backend shutdown complete.")
-            sys.exit(0)
-
-        # Handle termination signals (Ctrl+C, Docker Stop, etc.)
-        signal.signal(signal.SIGINT, shutdown_handler)
-        signal.signal(signal.SIGTERM, shutdown_handler)
-        return app
-
-
-print("herehererer")
+    return app
