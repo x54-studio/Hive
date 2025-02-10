@@ -1,13 +1,12 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // Import from "react-dom/client" for React 18+
+import ReactDOM from "react-dom/client";
 import App from "./App";
-import { AuthProvider } from "./authContext";
-import "./styles/index.css"; // Tailwind CSS styles
+import { ThemeProvider } from "./ThemeContext";  // Ensure correct casing
+import "./styles/index.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  // Remove <React.StrictMode> to prevent double renders
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>
 );

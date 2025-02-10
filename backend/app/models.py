@@ -5,6 +5,7 @@ from pymongo import MongoClient, errors
 from .config import Config
 from bson import ObjectId
 from datetime import datetime, timezone
+from flask import request
 
 # Global variables
 client = None
@@ -55,14 +56,19 @@ class User:
             return {"error": "Database connection failed. Please try again later."}
 
         hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-        user_data = {"username": username, "email": email, "password": hashed_pw, "role": role}
+        user_data = {
+            "username": username,
+            "email": email,
+            "password": hashed_pw,
+            "role": role,
+            "created_at": datetime.now(timezone.utc),
+        }
 
         try:
             users_collection.insert_one(user_data)
             return {"message": "User registered successfully!"}
         except errors.PyMongoError as e:
-            print(f"MongoDB Error: {e}")
-            return {"error": "Database operation failed."}
+            return {"error": f"Database error: {str(e)}"}
 
     @staticmethod
     def find_user_by_email(email):
@@ -100,6 +106,20 @@ class User:
         except errors.PyMongoError as e:
             print(f"MongoDB Error: {e}")
             return {"error": "Database operation failed."}
+    
+    @staticmethod
+    def store_refresh_token(username, hashed_refresh):
+        """Store hashed refresh token in the database"""
+        users_collection.update_one(
+            {"username": username},
+            {"$set": {"refresh_token": hashed_refresh}}
+        )
+
+    @staticmethod
+    def get_refresh_token(username):
+        """Retrieve hashed refresh token from the database"""
+        user = users_collection.find_one({"username": username})
+        return user.get("refresh_token") if user else None
 
 
 ### 📌 ARTICLE MODEL ###

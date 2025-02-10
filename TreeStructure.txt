@@ -1,0 +1,53 @@
+[DIR] backend
+    [DIR] app
+        [DIR] static
+            [FILE] swagger.json
+        [FILE] config.py
+        [FILE] models.py
+        [FILE] routes.py
+        [FILE] __init__.py
+    [FILE] .env
+    [FILE] .gitignore
+    [FILE] Dockerfile
+    [FILE] package-lock.json
+    [FILE] package.json
+    [FILE] requirements.txt
+    [FILE] run.py
+[DIR] frontend
+    [DIR] public
+        [FILE] favicon.ico
+        [FILE] index.html
+        [FILE] robots.txt
+    [DIR] src
+        [DIR] components
+            [FILE] AddArticle.js
+            [FILE] ArticleList.js
+            [FILE] Login.js
+            [FILE] Navbar.js
+            [FILE] ThemeToggle.js
+        [DIR] pages
+            [FILE] Home.js
+            [FILE] Login.js
+            [FILE] Profile.js
+            [FILE] Register.js
+        [DIR] styles
+            [FILE] index.css
+        [FILE] App.js
+        [FILE] AuthContext.js
+        [FILE] index.js
+        [FILE] ThemeContext.js
+    [FILE] .gitignore
+    [FILE] Dockerfile
+    [FILE] package-lock.json
+    [FILE] package.json
+    [FILE] README.md
+    [FILE] tailwind.config.js
+    [FILE] tests.js
+[FILE] .gitignore
+[FILE] docker-compose.yml
+[FILE] generate_favicon.py
+[FILE] README.md
+[FILE] script_create-frontend.ps1
+[FILE] script_generateTreeStructure.ps1
+[FILE] script_test_backend.ps1
+[FILE] TreeStructure.txt

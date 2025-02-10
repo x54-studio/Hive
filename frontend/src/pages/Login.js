@@ -1,41 +1,47 @@
+// src/pages/Login.js
 import React, { useState, useContext } from "react";
-import { AuthContext } from "../authContext";
+import { AuthContext } from "../AuthContext";
 
 function Login() {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(email, password);
+    setErrorMsg(""); // Clear any previous error message
+    try {
+      await login(email, password);
+    } catch (err) {
+      console.error("Login error:", err.message);
+      setErrorMsg("Login failed: " + err.message);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <h2 className="text-2xl font-bold">Login</h2>
-      <form onSubmit={handleSubmit} className="w-1/3">
+    <div className="max-w-md mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-4">Login</h2>
+      {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
+      <form onSubmit={handleSubmit}>
         <input
           type="email"
           placeholder="Email"
+          className="w-full p-2 border mb-2"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 w-full"
         />
         <input
           type="password"
           placeholder="Password"
+          className="w-full p-2 border mb-2"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 w-full mt-2"
         />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 mt-3">
+        <button type="submit" className="w-full bg-blue-500 text-white p-2">
           Login
         </button>
       </form>
-      <p className="mt-4">
-        Don't have an account? <a href="/register" className="text-blue-500">Register here</a>
-      </p>
     </div>
   );
 }

@@ -1,38 +1,31 @@
+// src/components/AddArticle.js
 import React, { useState, useContext } from "react";
-import { AuthContext } from "../authContext";
+import { AuthContext } from "../AuthContext";
 
-function AddArticle() {
-  console.log("AddArticle(js)");
+function AddArticle({ onArticleAdded }) {
   const { user } = useContext(AuthContext);
-  const token = localStorage.getItem("token");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null);
 
     if (!title || !content) {
       setError("Title and content cannot be empty!");
       return;
     }
 
-    console.log("🔑 Sending Token:", token); // Debugging: Check if token is present
-
     try {
       const response = await fetch("http://localhost:5000/api/articles", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ title, content }), // Ensure correct JSON structure
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // sends cookies (and JWT) along with the request
+        body: JSON.stringify({ title, content }),
       });
 
       const data = await response.json();
-      console.log("API Response:", data); // Debugging: Log API response
-
       if (!response.ok) {
         throw new Error(data.error || "Failed to create article.");
       }
@@ -40,12 +33,14 @@ function AddArticle() {
       alert("✅ Article added successfully!");
       setTitle("");
       setContent("");
+      onArticleAdded(); // trigger refresh in the parent component
     } catch (err) {
       console.error("Error submitting article:", err.message);
       setError(err.message);
     }
   };
 
+  // Only admin users see this form.
   if (!user || user.role !== "admin") return null;
 
   return (

@@ -1,60 +1,48 @@
 import React, { useState } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../AuthContext";
 
-function Login() {
-  const [username, setUsername] = useState("");
+const Login = () => {
+  const { login } = useContext(AuthContext);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.access_token);
-        setError("");
-        alert("Login successful!");
-      } else {
-        setError(data.error);
-      }
+      await login(email, password);
     } catch (err) {
-      setError("An error occurred. Please try again. "+err.toString());
+      setError("Login failed. Please try again.");
     }
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleLogin}>
-        <label>
-          Username:
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Password:
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit">Login</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="max-w-md mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-4">Login</h2>
+      {error && <p className="text-red-500">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full p-2 border mb-2"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full p-2 border mb-2"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit" className="w-full bg-blue-500 text-white p-2">
+          Login
+        </button>
       </form>
-
-
     </div>
   );
-}
+};
 
 export default Login;

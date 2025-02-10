@@ -3,19 +3,17 @@ import React, { createContext, useState, useEffect } from "react";
 const ThemeContext = createContext();
 
 const ThemeProvider = ({ children }) => {
+  // Get initial theme from localStorage or default to "light"
   const storedTheme = localStorage.getItem("theme") || "light";
   const [theme, setTheme] = useState(storedTheme);
 
   useEffect(() => {
-    const root = document.documentElement;
-    
-    // Remove both themes to prevent conflicts
+    const root = document.documentElement; // the <html> element
+    // Remove any previous theme classes
     root.classList.remove("light", "dark");
-
-    // Apply the current theme
+    // Add the current theme class
     root.classList.add(theme);
-
-    // Store in localStorage
+    // Save theme to localStorage for persistence
     localStorage.setItem("theme", theme);
   }, [theme]);
 

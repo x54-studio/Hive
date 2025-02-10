@@ -14,7 +14,7 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, supports_credentials=True, origins=["http://localhost:3000"], resources={r"/*": {"origins": "*"}})
     jwt.init_app(app)  # Initialize JWTManager with the Flask app
 
     # Ensure logs are sent to console immediately
@@ -35,21 +35,21 @@ def create_app():
         app.register_blueprint(main)
         # Graceful shutdown handler
         def shutdown_handler(signum, frame):
-            print("🛑 Shutdown initiated...")
+            print("Shutdown initiated...")
 
             # Stop the scheduler
             if scheduler:
-                print("⏳ Stopping scheduler...")
+                print("Stopping scheduler...")
                 scheduler.shutdown(wait=False)
-                print("✅ Scheduler stopped.")
+                print("Scheduler stopped.")
 
             # Close MongoDB connection
             if client:
-                print("🔌 Closing MongoDB connection...")
+                print("Closing MongoDB connection...")
                 client.close()
-                print("✅ MongoDB connection closed.")
+                print("MongoDB connection closed.")
 
-            print("✅ Backend shutdown complete.")
+            print("Backend shutdown complete.")
             sys.exit(0)
 
         # Handle termination signals (Ctrl+C, Docker Stop, etc.)

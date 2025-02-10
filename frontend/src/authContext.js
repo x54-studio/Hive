@@ -1,108 +1,136 @@
-import React, { createContext, useState, useEffect } from "react";
+// src/AuthContext.js
+import React, { createContext, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
-var INITIALIZED_ONCE = 1;
 const AuthContext = createContext();
+const REFRESH_INTERVAL = 30000; // 30 seconds
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-  const decodeToken = (token) => {
+  const fetchUserProfile = async () => {
     try {
-      const base64Url = token.split(".")[1]; // Extract payload
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const decoded = JSON.parse(atob(base64));
-
-      console.log("Decoded Token:", decoded); // Debugging
-
-      return {
-        username: decoded.sub, // ✅ `sub` is now a plain string
-        role: decoded.role, // ✅ Extract role from claims
-        exp: decoded.exp, // ✅ Store expiration time
-      };
+      const response = await fetch("http://localhost:5000/api/protected", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else if (response.status === 401) {
+        // Attempt to refresh tokens if access token is expired
+        const refreshResponse = await fetch("http://localhost:5000/api/refresh", {
+          method: "POST",
+          credentials: "include",
+        });
+        if (refreshResponse.ok) {
+          // Retry fetching the profile after successful refresh
+          const retryResponse = await fetch("http://localhost:5000/api/protected", {
+            method: "GET",
+            credentials: "include",
+          });
+          if (retryResponse.ok) {
+            const userData = await retryResponse.json();
+            setUser(userData);
+          } else {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
     } catch (error) {
-      console.error("Error decoding token:", error);
-      return null;
+      console.error("Error fetching profile:", error);
+      setUser(null);
     }
   };
 
-  const refreshToken = async () => {
+
+  // Logout function: call the backend to clear cookies then update local state.
+  const logout = useCallback(async () => {
+    try {
+      await fetch("http://localhost:5000/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      // Broadcast logout event to other tabs
+      localStorage.setItem("logout", Date.now().toString());
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  // Refresh tokens, but only if a user is logged in.
+  const refreshTokens = useCallback(async () => {
+    if (!user) return;
     try {
       const response = await fetch("http://localhost:5000/api/refresh", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Ensure cookies are sent with request
+        credentials: "include",
       });
-  
-      const data = await response.json();
-      if (data.access_token) {
-        localStorage.setItem("token", data.access_token);
-        return data.access_token;
+      if (response.ok) {
+        console.log("Tokens refreshed successfully.");
       } else {
+        console.error("Failed to refresh tokens, logging out.");
         logout();
       }
     } catch (error) {
-      console.error("Failed to refresh token:", error);
+      console.error("Error refreshing tokens:", error);
       logout();
     }
-  };
-  
-  const checkTokenExpiration = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  }, [logout, user]);
 
-    console.log("checkTokenExpiration");
-    const decoded = decodeToken(token);
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    if (decoded && decoded.exp < currentTime) {
-      console.warn("Token expired, refreshing...");
-      await refreshToken(); // ✅ Try refreshing the token
-    }
-  
-  };
-  
-  useEffect(() => {    
-    if (INITIALIZED_ONCE == 1)
-    {
-      INITIALIZED_ONCE = 0;
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decodedUser = decodeToken(token);
-      if (decodedUser) {
-        setUser(decodedUser);
-      } else {
-        localStorage.removeItem("token");
-      }
-    }
-
-    // ✅ Check token expiration periodically
+  // Set up a periodic token refresh only when the user is logged in.
+  useEffect(() => {
+    if (!user) return;
     const interval = setInterval(() => {
-      checkTokenExpiration();
-    }, 1 * 60 * 1000); // Every 1 minute
-  }
+      refreshTokens();
+    }, REFRESH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [refreshTokens, user]);
+
+  // On mount, fetch the user profile to update auth state.
+  useEffect(() => {
+    fetchUserProfile();
   }, []);
-  
+
+  // Listen for logout events from other tabs
+  useEffect(() => {
+    const handleStorageLogout = (event) => {
+      if (event.key === "logout") {
+        setUser(null);
+        navigate("/login");
+      }
+    };
+    window.addEventListener("storage", handleStorageLogout);
+    return () => window.removeEventListener("storage", handleStorageLogout);
+  }, [navigate]);
 
   const login = async (email, password) => {
-    const response = await fetch("http://localhost:5000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    if (data.access_token) {
-      localStorage.setItem("token", data.access_token);
-      const decodedUser = decodeToken(data.access_token);
-      setUser(decodedUser);
-      window.location.href = "/"; // 🚀 Redirect to profile page after login
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (data.message === "Login successful") {
+        await fetchUserProfile();
+        navigate("/profile");
+      } else {
+        throw new Error(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    window.location.href = "/login"; // 🚀 Redirect to login page
   };
 
   return (
