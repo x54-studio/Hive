@@ -16,12 +16,10 @@ from services.user_service import UserService
 from app.config import Config
 import bcrypt
 from pymongo import MongoClient
-import repositories.db as db_module
 import jwt
 
 class TestUserService(unittest.TestCase):
     def setUp(self):
-
         # Instantiate UserService with positional parameters.
         self.user_service = UserService(
             Config.JWT_SECRET_KEY,

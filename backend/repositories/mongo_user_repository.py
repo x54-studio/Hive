@@ -7,7 +7,6 @@ This implementation uses the globally shared database instance from repositories
 
 from pymongo import errors
 from repositories.base_user_repository import BaseUserRepository
-import repositories.db as db_module
 from repositories.db import db
 
 class MongoUserRepository(BaseUserRepository):

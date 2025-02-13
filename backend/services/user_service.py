@@ -42,11 +42,13 @@ class UserService:
         if not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
             return {"error": "Invalid credentials"}
 
+        now = datetime.now(timezone.utc)
         access_payload = {
             "sub": user["username"],
             "email": user["email"],
             "role": user["role"],
-            "exp": datetime.now(timezone.utc) + timedelta(seconds=self.jwt_access_expires)
+            "iat": now.timestamp(),
+            "exp": (now + timedelta(seconds=self.jwt_access_expires)).timestamp()
         }
         access_token = jwt.encode(access_payload, self.jwt_secret_key, algorithm=self.jwt_algorithm)
 
@@ -54,7 +56,8 @@ class UserService:
         refresh_payload = {
             "sub": user["username"],
             "email": user["email"],
-            "exp": datetime.now(timezone.utc) + timedelta(seconds=self.jwt_refresh_expires)
+            "iat": now.timestamp(),
+            "exp": (now + timedelta(seconds=self.jwt_refresh_expires)).timestamp()
         }
         refresh_token = jwt.encode(refresh_payload, self.jwt_secret_key, algorithm=self.jwt_algorithm)
 
@@ -93,18 +96,21 @@ class UserService:
         if not user:
             return {"error": "User not found"}
     
+        now = datetime.now(timezone.utc)
         new_access_payload = {
             "sub": user["username"],
             "email": user["email"],
             "role": user["role"],
-            "exp": datetime.now(timezone.utc) + timedelta(seconds=self.jwt_access_expires)
+            "iat": now.timestamp(),
+            "exp": (now + timedelta(seconds=self.jwt_access_expires)).timestamp()
         }
         new_access_token = jwt.encode(new_access_payload, self.jwt_secret_key, algorithm=self.jwt_algorithm)
     
         new_refresh_payload = {
             "sub": user["username"],
             "email": user["email"],
-            "exp": datetime.now(timezone.utc) + timedelta(seconds=self.jwt_refresh_expires)
+            "iat": now.timestamp(),
+            "exp": (now + timedelta(seconds=self.jwt_refresh_expires)).timestamp()
         }
         new_refresh_token = jwt.encode(new_refresh_payload, self.jwt_secret_key, algorithm=self.jwt_algorithm)
         new_hashed_refresh = bcrypt.hashpw(new_refresh_token.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
