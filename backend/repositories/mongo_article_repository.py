@@ -1,14 +1,19 @@
-# article_repository.py
+"""
+repositories/mongo_article_repository.py
 
-from pymongo import MongoClient, errors
+Concrete implementation of the BaseArticleRepository interface using MongoDB.
+This implementation uses the globally shared database instance from repositories/db.py.
+"""
+
+from pymongo import errors
 from bson import ObjectId
+from repositories.base_article_repository import BaseArticleRepository
+from repositories.db import db
 
-class ArticleRepository:
-    def __init__(self, mongo_uri, db_name="hive_db"):
-        self.client = MongoClient(mongo_uri)
-        # Assumes that the default database is set in the URI or by the client.
-        self.db = self.client.get_database(db_name)
-        self.articles = self.db.articles
+class MongoArticleRepository(BaseArticleRepository):
+    def __init__(self):
+        # Use the shared database instance.
+        self.articles = db.articles
 
     def create_article(self, article_data):
         try:
@@ -51,6 +56,3 @@ class ArticleRepository:
             return result.deleted_count > 0
         except errors.PyMongoError as e:
             raise Exception(f"Error deleting article: {str(e)}")
-
-    def close(self):
-        self.client.close()

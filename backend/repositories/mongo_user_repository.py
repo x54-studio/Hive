@@ -1,13 +1,19 @@
-# user_repository.py
+"""
+repositories/mongo_user_repository.py
 
-from pymongo import MongoClient, errors
+Concrete implementation of the BaseUserRepository interface using MongoDB.
+This implementation uses the globally shared database instance from repositories/db.py.
+"""
 
-class UserRepository:
-    def __init__(self, mongo_uri, db_name="hive_db"):
-        self.client = MongoClient(mongo_uri)
-        # Assumes that the default database is set in the URI or by the client.
-        self.db = self.client.get_database(db_name)
-        self.users = self.db.users
+from pymongo import errors
+from repositories.base_user_repository import BaseUserRepository
+import repositories.db as db_module
+from repositories.db import db
+
+class MongoUserRepository(BaseUserRepository):
+    def __init__(self):
+        # Use the shared database instance.
+        self.users = db.users
 
     def find_by_email(self, email):
         try:
@@ -16,6 +22,9 @@ class UserRepository:
             raise Exception(f"Error finding user by email: {str(e)}")
 
     def find_by_username(self, username):
+        """
+        Retrieve a user document by username.
+        """
         try:
             return self.users.find_one({"username": username})
         except errors.PyMongoError as e:
@@ -44,18 +53,16 @@ class UserRepository:
 
     def store_refresh_token(self, username, hashed_refresh):
         try:
+            # Store refresh token using username as the unique key.
             self.users.update_one({"username": username}, {"$set": {"refresh_token": hashed_refresh}})
         except errors.PyMongoError as e:
             raise Exception(f"Error storing refresh token: {str(e)}")
 
     def get_refresh_token(self, username):
         try:
-            user = self.find_by_username(username)
+            user = self.users.find_one({"username": username})
             if user:
                 return user.get("refresh_token")
             return None
         except errors.PyMongoError as e:
             raise Exception(f"Error getting refresh token: {str(e)}")
-
-    def close(self):
-        self.client.close()

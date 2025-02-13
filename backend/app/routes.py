@@ -1,34 +1,37 @@
-# app/routes.py
+"""
+app/routes.py
+
+Defines the API endpoints (routes) for the application.
+Routes utilize the service layer for business logic and database operations.
+"""
 
 from flask import Blueprint, request, jsonify, make_response
-from flask_jwt_extended import (
-    jwt_required, get_jwt_identity, get_jwt
-)
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from services.user_service import UserService
 from services.article_service import ArticleService
 from app.config import Config
-from datetime import datetime
 
+# Create a blueprint for our API routes.
 main = Blueprint('main', __name__)
 
-# Initialize service instances.
-# In production you might use dependency injection or an application factory.
+# Initialize service instances. These services use the repository interfaces.
 user_service = UserService(
-    Config.MONGO_URI,
     Config.JWT_SECRET_KEY,
     Config.JWT_ALGORITHM,
     int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()),
     int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()),
-    db_name="hive_db"  # Explicitly pass the database name
+    None,
 )
-article_service = ArticleService(Config.MONGO_URI, db_name="hive_db")
+article_service = ArticleService()
 
 @main.route("/")
 def home():
+    """Home route to check if the API is running."""
     return jsonify({"message": "Welcome to Hive!"})
 
 @main.route("/api/register", methods=["POST"])
 def register():
+    """User registration endpoint."""
     data = request.get_json()
     if not data or not all(k in data for k in ("username", "email", "password")):
         return jsonify({"error": "Missing required fields"}), 400
@@ -38,20 +41,25 @@ def register():
 
 @main.route("/api/login", methods=["POST"])
 def login():
+    """User login endpoint."""
     data = request.get_json()
     if not data or not all(k in data for k in ("email", "password")):
         return jsonify({"error": "Missing email or password"}), 400
     result = user_service.login_user(data["email"], data["password"])
     if "error" in result:
         return jsonify(result), 401
-    # Create a response with JWT tokens set in HTTP-only cookies
     response = make_response(jsonify({"message": result["message"]}))
-    response.set_cookie("access_token", result["access_token"], httponly=True, max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
-    response.set_cookie("refresh_token", result["refresh_token"], httponly=True, max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
+    response.set_cookie("access_token", result["access_token"],
+                        httponly=True,
+                        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
+    response.set_cookie("refresh_token", result["refresh_token"],
+                        httponly=True,
+                        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
     return response
 
 @main.route("/api/refresh", methods=["POST"])
 def refresh():
+    """Token refresh endpoint."""
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         return jsonify({"error": "Missing refresh token"}), 401
@@ -59,12 +67,17 @@ def refresh():
     if "error" in result:
         return jsonify(result), 401
     response = make_response(jsonify({"message": result["message"]}))
-    response.set_cookie("access_token", result["access_token"], httponly=True, max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
-    response.set_cookie("refresh_token", result["refresh_token"], httponly=True, max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
+    response.set_cookie("access_token", result["access_token"],
+                        httponly=True,
+                        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
+    response.set_cookie("refresh_token", result["refresh_token"],
+                        httponly=True,
+                        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
     return response
 
 @main.route("/api/articles", methods=["GET"])
 def get_articles():
+    """Retrieve a paginated list of articles."""
     try:
         page = int(request.args.get("page", 1))
         limit = int(request.args.get("limit", 10))
@@ -76,6 +89,7 @@ def get_articles():
 @main.route("/api/articles", methods=["POST"])
 @jwt_required()
 def create_article():
+    """Create a new article (requires authentication)."""
     current_user = get_jwt_identity()
     data = request.get_json()
     if not data or not all(k in data for k in ("title", "content")):
@@ -86,6 +100,7 @@ def create_article():
 
 @main.route("/api/articles/<article_id>", methods=["GET"])
 def get_article(article_id):
+    """Retrieve an article by its ID."""
     result = article_service.get_article_by_id(article_id)
     if "error" in result:
         return jsonify(result), 404
@@ -94,6 +109,7 @@ def get_article(article_id):
 @main.route("/api/articles/<article_id>", methods=["PUT"])
 @jwt_required()
 def update_article(article_id):
+    """Update an existing article (requires authentication)."""
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided for update"}), 400
@@ -104,12 +120,14 @@ def update_article(article_id):
 @main.route("/api/articles/<article_id>", methods=["DELETE"])
 @jwt_required()
 def delete_article(article_id):
+    """Delete an article (requires authentication)."""
     result = article_service.delete_article(article_id)
     status_code = 200 if "message" in result else 404
     return jsonify(result), status_code
 
 @main.route("/api/logout", methods=["POST"])
 def logout():
+    """Log out the user by deleting the JWT cookies."""
     response = make_response(jsonify({"message": "Logged out successfully"}))
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
@@ -118,6 +136,8 @@ def logout():
 @main.route("/api/protected", methods=["GET"])
 @jwt_required()
 def protected():
+    """A protected route that returns the user's identity and JWT claims."""
     identity = get_jwt_identity()
     jwt_claims = get_jwt()
     return jsonify({"username": identity, "role": jwt_claims["role"]})
+    #return jsonify({"username": identity, "claims": jwt_claims})

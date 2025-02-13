@@ -1,3 +1,46 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  
+/* Keyframes for animating the SVG shapes */
+@keyframes shapeColorShift {
+  0% {
+    fill: #FDD835;
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    fill: #66BB6A;
+    transform: translate(10px, -10px) scale(1.05);
+  }
+  100% {
+    fill: #FDD835;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes shapeColorShift2 {
+  0% {
+    fill: #8D6E63;
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    fill: #FBC02D;
+    transform: translate(-10px, 10px) scale(0.95);
+  }
+  100% {
+    fill: #8D6E63;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Ensure the body is set to full height */
+body {
+  margin: 0;
+  min-height: 100vh;
+}

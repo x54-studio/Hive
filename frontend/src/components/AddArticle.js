@@ -30,7 +30,6 @@ function AddArticle({ onArticleAdded }) {
         throw new Error(data.error || "Failed to create article.");
       }
 
-      alert("✅ Article added successfully!");
       setTitle("");
       setContent("");
       onArticleAdded(); // trigger refresh in the parent component
