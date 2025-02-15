@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+package-lock.json
+
 # Environment variables
 .env
 

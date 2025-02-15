@@ -27,7 +27,6 @@ backend/
 │   └── user_service.py
 ├── tests/                  # Unit and integration tests
 │   ├── test_article_service.py
-│   ├── test_backend_refactoring.py
 │   ├── test_cookie_set.py
 │   ├── test_routes.py
 │   └── test_user_service.py
