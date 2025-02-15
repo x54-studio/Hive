@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+
 @dataclass
 class User:
     """
@@ -19,6 +20,7 @@ class User:
     role: str
     created_at: datetime
     refresh_token: Optional[str] = None
+
 
 @dataclass
 class Article:

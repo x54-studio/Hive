@@ -7,6 +7,7 @@ All concrete implementations must implement these methods.
 
 from abc import ABC, abstractmethod
 
+
 class BaseUserRepository(ABC):
     @abstractmethod
     def find_by_email(self, email):
@@ -35,10 +36,10 @@ class BaseUserRepository(ABC):
 
     @abstractmethod
     def store_refresh_token(self, username, hashed_refresh):
-        """Store the hashed refresh token for the specified user (using username)."""
+        """Store the hashed refresh token for the specified user."""
         pass
 
     @abstractmethod
     def get_refresh_token(self, username):
-        """Retrieve the stored refresh token for the specified user (using username)."""
+        """Retrieve the stored refresh token for the specified user."""
         pass

@@ -5,11 +5,12 @@ Defines the API endpoints (routes) for the application.
 Routes utilize the service layer for business logic and database operations.
 """
 
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from services.user_service import UserService
 from services.article_service import ArticleService
 from app.config import Config
+
 
 # Create a blueprint for our API routes.
 main = Blueprint('main', __name__)
@@ -22,12 +23,15 @@ user_service = UserService(
     int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()),
     None,
 )
+
 article_service = ArticleService()
+
 
 @main.route("/")
 def home():
     """Home route to check if the API is running."""
     return jsonify({"message": "Welcome to Hive!"})
+
 
 @main.route("/api/register", methods=["POST"])
 def register():
@@ -39,16 +43,26 @@ def register():
     status_code = 201 if "message" in result else 500
     return jsonify(result), status_code
 
+
 @main.route("/api/login", methods=["POST"])
 def login():
     """User login endpoint."""
     data = request.get_json()
     if not data or not all(k in data for k in ("email", "password")):
         return jsonify({"error": "Missing email or password"}), 400
+
     result = user_service.login_user(data["email"], data["password"])
     if "error" in result:
         return jsonify(result), 401
-    response = make_response(jsonify({"message": result["message"]}))
+
+    # In production, tokens are only set in cookies.
+    # In testing mode, also include tokens in the JSON response for easy verification.
+    response_data = {"message": result["message"]}
+    if current_app.config.get("TESTING", False):
+        response_data["access_token"] = result["access_token"]
+        response_data["refresh_token"] = result["refresh_token"]
+
+    response = make_response(jsonify(response_data))
     response.set_cookie("access_token", result["access_token"],
                         httponly=True,
                         max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
@@ -56,6 +70,7 @@ def login():
                         httponly=True,
                         max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
     return response
+
 
 @main.route("/api/refresh", methods=["POST"])
 def refresh():
@@ -75,6 +90,7 @@ def refresh():
                         max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
     return response
 
+
 @main.route("/api/articles", methods=["GET"])
 def get_articles():
     """Retrieve a paginated list of articles."""
@@ -85,6 +101,7 @@ def get_articles():
         return jsonify({"error": "Invalid pagination parameters"}), 400
     articles = article_service.get_all_articles(page=page, limit=limit)
     return jsonify(articles)
+
 
 @main.route("/api/articles", methods=["POST"])
 @jwt_required()
@@ -98,6 +115,7 @@ def create_article():
     status_code = 201 if "message" in result else 500
     return jsonify(result), status_code
 
+
 @main.route("/api/articles/<article_id>", methods=["GET"])
 def get_article(article_id):
     """Retrieve an article by its ID."""
@@ -106,6 +124,7 @@ def get_article(article_id):
         return jsonify(result), 404
     return jsonify(result)
 
+
 @main.route("/api/articles/<article_id>", methods=["PUT"])
 @jwt_required()
 def update_article(article_id):
@@ -113,9 +132,12 @@ def update_article(article_id):
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided for update"}), 400
-    result = article_service.update_article(article_id, title=data.get("title"), content=data.get("content"))
+    result = article_service.update_article(article_id,
+                                            title=data.get("title"),
+                                            content=data.get("content"))
     status_code = 200 if "message" in result else 404
     return jsonify(result), status_code
+
 
 @main.route("/api/articles/<article_id>", methods=["DELETE"])
 @jwt_required()
@@ -125,6 +147,7 @@ def delete_article(article_id):
     status_code = 200 if "message" in result else 404
     return jsonify(result), status_code
 
+
 @main.route("/api/logout", methods=["POST"])
 def logout():
     """Log out the user by deleting the JWT cookies."""
@@ -133,6 +156,7 @@ def logout():
     response.delete_cookie("refresh_token")
     return response
 
+
 @main.route("/api/protected", methods=["GET"])
 @jwt_required()
 def protected():
@@ -140,4 +164,4 @@ def protected():
     identity = get_jwt_identity()
     jwt_claims = get_jwt()
     return jsonify({"username": identity, "role": jwt_claims["role"]})
-    #return jsonify({"username": identity, "claims": jwt_claims})
+    # return jsonify({"username": identity, "claims": jwt_claims})

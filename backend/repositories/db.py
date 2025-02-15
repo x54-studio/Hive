@@ -1,21 +1,29 @@
-from pymongo import MongoClient
-from app.config import Config
-import atexit
+import logging
 import os
+from pymongo import MongoClient
 
-# Check if running in test mode
-is_testing = os.getenv("TESTING", "false").lower() == "true"
+logger = logging.getLogger(__name__)
 
-# Select the appropriate database URI and name based on the environment
-mongo_uri = Config.TEST_MONGO_URI if is_testing else Config.MONGO_URI
-mongo_db_name = Config.TEST_MONGO_DB_NAME if is_testing else Config.MONGO_DB_NAME
 
-# Create a global MongoClient instance using connection pooling
-client = MongoClient(mongo_uri)
-# Retrieve the shared database instance
-db = client.get_database(mongo_db_name)
+def init_db():
+    # Check if running in testing mode using an environment variable
+    is_testing = os.getenv("TESTING", "false").lower() == "true"
 
-print(f"Connected to database: '{mongo_db_name}'")
+    # Get connection details directly from environment variables
+    if is_testing:
+        mongo_uri = os.getenv("TEST_MONGO_URI", "mongodb://localhost:27017/")
+        mongo_db_name = os.getenv("TEST_MONGO_DB_NAME", "hive_db_test")
+    else:
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+        mongo_db_name = os.getenv("MONGO_DB_NAME", "hive_db")
 
-# Register an exit handler to close the client when the process ends.
-atexit.register(client.close)
+    logger.info(f"is_testing: {is_testing}")
+
+    client = MongoClient(mongo_uri)
+    return client[mongo_db_name]
+
+
+db = init_db()
+
+print(f"Connected to database: {db.name}")
+logger.info(f"Connected to database: {db.name}")

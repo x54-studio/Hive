@@ -1,16 +1,46 @@
+[DIR] .pytest_cache
+    [DIR] v
+        [DIR] cache
+            [FILE] lastfailed
+            [FILE] nodeids
+            [FILE] stepwise
+    [FILE] .gitignore
+    [FILE] CACHEDIR.TAG
+    [FILE] README.md
+[DIR] .vscode
+    [FILE] launch.json
 [DIR] backend
     [DIR] app
         [DIR] static
             [FILE] swagger.json
         [FILE] config.py
+        [FILE] error_handlers.py
+        [FILE] logging_config.py
         [FILE] models.py
         [FILE] routes.py
         [FILE] __init__.py
+    [DIR] repositories
+        [FILE] base_article_repository.py
+        [FILE] base_user_repository.py
+        [FILE] db.py
+        [FILE] mongo_article_repository.py
+        [FILE] mongo_user_repository.py
+        [FILE] proxy_user_repository.py
+    [DIR] services
+        [FILE] article_service.py
+        [FILE] user_service.py
+    [DIR] tests
+        [FILE] test_article_service.py
+        [FILE] test_backend_refactoring.py
+        [FILE] test_cookie_set
+        [FILE] test_routes.py
+        [FILE] test_user_service.py
     [FILE] .env
     [FILE] .gitignore
     [FILE] Dockerfile
     [FILE] package-lock.json
     [FILE] package.json
+    [FILE] README.md
     [FILE] requirements.txt
     [FILE] run.py
 [DIR] frontend
@@ -22,6 +52,7 @@
         [DIR] components
             [FILE] AddArticle.js
             [FILE] ArticleList.js
+            [FILE] Layout.js
             [FILE] Login.js
             [FILE] Navbar.js
             [FILE] ThemeToggle.js
@@ -43,6 +74,7 @@
     [FILE] README.md
     [FILE] tailwind.config.js
     [FILE] tests.js
+[FILE] .flake8
 [FILE] .gitignore
 [FILE] docker-compose.yml
 [FILE] generate_favicon.py

@@ -1,11 +1,5 @@
-"""
-repositories/base_article_repository.py
-
-Abstract base class defining the interface for article repository operations.
-Any concrete implementation must implement these methods.
-"""
-
 from abc import ABC, abstractmethod
+
 
 class BaseArticleRepository(ABC):
     @abstractmethod

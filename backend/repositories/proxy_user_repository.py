@@ -9,6 +9,7 @@ If the primary repository fails (e.g., due to database downtime), it can delegat
 from repositories.base_user_repository import BaseUserRepository
 from repositories.mongo_user_repository import MongoUserRepository
 
+
 class ProxyUserRepository(BaseUserRepository):
     def __init__(self, primary_repo=None, fallback_repo=None):
         # Use a primary repository; default is MongoUserRepository.

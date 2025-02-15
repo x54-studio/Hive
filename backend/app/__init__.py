@@ -1,53 +1,66 @@
-"""
-app/__init__.py
-
-This module initializes the Flask application, sets up extensions (JWT, CORS, Swagger UI),
-and registers API routes via a blueprint.
-It loads configuration from app/config.py.
-"""
-
 import signal
+import os
 import sys
-from flask import Flask
+import logging
+from flask import Flask, request
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-from app.routes import main  # Import the blueprint with API routes
+from app.routes import main  # Blueprint with API routes
 from app.config import Config
+from app.error_handlers import register_error_handlers
+from app.logging_config import setup_logging
 
-# Initialize JWT Manager globally.
+
 jwt = JWTManager()
 
+
 def create_app():
-    """
-    Factory function to create and configure the Flask application.
-    """
+    # Setup structured logging
+    is_testing = os.getenv("TESTING", "false").lower() == "true"
+    setup_logging(logging.INFO if is_testing else logging.WARNING)
+
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Setup CORS: allow requests from the frontend.
     CORS(app, supports_credentials=True, origins=["http://localhost:3000"],
          resources={r"/*": {"origins": "*"}})
-    
-    # Initialize JWT extension.
+
     jwt.init_app(app)
-    
-    # Setup Swagger UI for API documentation.
+
     SWAGGER_URL = '/api/docs'
     API_URL = '/static/swagger.json'
     swagger_ui = get_swaggerui_blueprint(SWAGGER_URL, API_URL)
     app.register_blueprint(swagger_ui, url_prefix=SWAGGER_URL)
-    
-    # Register the main blueprint containing API routes.
+
     app.register_blueprint(main)
-    
-    # Optionally, register a signal handler for graceful shutdown.
+
+    # Register centralized error handlers
+    register_error_handlers(app)
+
+    # Add security headers
+    @app.after_request
+    def set_security_headers(response):
+        # Relax CSP for Swagger UI endpoints (e.g. /api/docs and its subpaths)
+        if request.path.startswith('/api/docs'):
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data:;"
+            )
+        else:
+            csp = "default-src 'self'"
+        response.headers["Content-Security-Policy"] = csp
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
     def shutdown_handler(signum, frame):
-        print("Shutdown initiated...")
-        # If needed, perform additional cleanup here.
+        app.logger.info("Shutdown initiated...", extra={"extra_data": {"signal": signum}})
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_handler)
     signal.signal(signal.SIGTERM, shutdown_handler)
-    
+
     return app

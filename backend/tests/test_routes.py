@@ -11,7 +11,7 @@ import json
 from app import create_app
 from app.config import Config
 from pymongo import MongoClient
-import repositories.db as db_module
+
 
 class TestRoutesIntegration(unittest.TestCase):
     def setUp(self):
@@ -19,7 +19,7 @@ class TestRoutesIntegration(unittest.TestCase):
         self.app = create_app()
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
-        
+
     def tearDown(self):
         # Clean up test collections.
         client = MongoClient(Config.TEST_MONGO_URI)
@@ -39,6 +39,7 @@ class TestRoutesIntegration(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
         self.assertIn("error", data)
+
 
 if __name__ == '__main__':
     unittest.main()

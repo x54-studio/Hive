@@ -10,13 +10,14 @@ database instance in repositories/db.py. It includes tests for:
   - Ensuring that login returns valid JWT tokens.
   - Verifying that the refresh endpoint issues new tokens.
 """
-
 import unittest
+import logging
 from services.user_service import UserService
 from app.config import Config
 import bcrypt
 from pymongo import MongoClient
 import jwt
+
 
 class TestUserService(unittest.TestCase):
     def setUp(self):
@@ -28,6 +29,7 @@ class TestUserService(unittest.TestCase):
             180,   # jwt_refresh_expires in seconds
             None,  # repository: default MongoUserRepository
         )
+        logging.getLogger("services.user_service").setLevel(logging.WARNING)
 
     def tearDown(self):
         # Clean up the test collection after each test.
@@ -35,17 +37,17 @@ class TestUserService(unittest.TestCase):
         test_db = client.get_database(Config.TEST_MONGO_DB_NAME)
         test_db.users.delete_many({})
         client.close()
-        
+
     def test_register_user(self):
         result = self.user_service.register_user("testuser", "testuser@example.com", "password123")
         self.assertIn("message", result)
         self.assertEqual(result["message"], "User registered successfully!")
-    
+
     def test_login_user_invalid_credentials(self):
         result = self.user_service.login_user("nonexistent@example.com", "password")
         self.assertIn("error", result)
         self.assertEqual(result["error"], "User not found")
-    
+
     def test_password_hashing(self):
         result = self.user_service.register_user("hashuser", "hash@example.com", "secret")
         self.assertIn("message", result)
@@ -64,7 +66,9 @@ class TestUserService(unittest.TestCase):
         self.assertIn("refresh_token", login_result)
         self.assertIn("message", login_result)
         # Decode the access token to verify payload contents.
-        access_payload = jwt.decode(login_result["access_token"], Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+        access_payload = jwt.decode(login_result["access_token"],
+                                    Config.JWT_SECRET_KEY,
+                                    algorithms=[Config.JWT_ALGORITHM])
         self.assertEqual(access_payload.get("sub"), "tokenuser")
         self.assertEqual(access_payload.get("email"), "tokenuser@example.com")
 
@@ -81,6 +85,7 @@ class TestUserService(unittest.TestCase):
         # Ensure the new tokens are different from the original tokens.
         self.assertNotEqual(refresh_result["access_token"], login_result["access_token"])
         self.assertNotEqual(refresh_result["refresh_token"], refresh_token)
+
 
 if __name__ == '__main__':
     unittest.main()
