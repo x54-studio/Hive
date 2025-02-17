@@ -1,4 +1,3 @@
-// src/components/AddArticle.js
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../AuthContext";
 
@@ -21,7 +20,7 @@ function AddArticle({ onArticleAdded }) {
       const response = await fetch("http://localhost:5000/api/articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // sends cookies (and JWT) along with the request
+        credentials: "include",
         body: JSON.stringify({ title, content }),
       });
 
@@ -32,34 +31,41 @@ function AddArticle({ onArticleAdded }) {
 
       setTitle("");
       setContent("");
-      onArticleAdded(); // trigger refresh in the parent component
+      onArticleAdded();
     } catch (err) {
       console.error("Error submitting article:", err.message);
       setError(err.message);
     }
   };
 
-  // Only admin users see this form.
   if (!user || user.role !== "admin") return null;
 
   return (
-    <form onSubmit={handleSubmit} className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-      <h2 className="text-lg font-bold mb-3">Add New Article</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow"
+    >
+      <h2 className="text-lg font-bold mb-3 text-gray-900 dark:text-gray-200">
+        Add New Article
+      </h2>
       {error && <p className="text-red-500">{error}</p>}
       <input
         type="text"
         placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="border p-2 w-full rounded mb-2"
+        className="border p-2 w-full rounded mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
       />
       <textarea
         placeholder="Content"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="border p-2 w-full rounded mb-2"
+        className="border p-2 w-full rounded mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
       ></textarea>
-      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+      <button
+        type="submit"
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
         Publish Article
       </button>
     </form>

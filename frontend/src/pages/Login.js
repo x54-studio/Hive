@@ -21,7 +21,7 @@ const Login = () => {
 
   return (
     <div className="flex flex-col pt-40 items-center justify-center">
-      <ToastContainer position="top-right" autoClose={5000} style={{ top: "80px"}}/>
+      <ToastContainer position="top-right" autoClose={5000} style={{ top: "80px" }}/>
       <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-8 max-w-md w-full">
         <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
         <form onSubmit={handleSubmit}>

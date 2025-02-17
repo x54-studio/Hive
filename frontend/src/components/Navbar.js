@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../AuthContext";
 import ThemeToggle from "./ThemeToggle";
 
-function Navbar() {
+const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <nav className="bg-gray-800 text-white p-4 flex justify-between items-center">
+    <nav className="bg-gray-800 dark:bg-gray-900 text-white p-4 flex justify-between items-center">
       <h1 className="text-2xl font-bold">
         <Link to="/">Hive News</Link>
       </h1>
@@ -16,7 +16,9 @@ function Navbar() {
         {user ? (
           <>
             <Link to="/profile" className="hover:underline">Profile</Link>
-            <button onClick={logout} className="bg-red-500 px-4 py-2 rounded">Logout</button>
+            <button onClick={logout} className="bg-red-500 px-4 py-2 rounded hover:bg-red-600">
+              Logout
+            </button>
           </>
         ) : (
           <>
@@ -28,6 +30,6 @@ function Navbar() {
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar;

@@ -10,8 +10,7 @@ function ArticleList({ refreshSignal }) {
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef();
 
-  // Fetch paginated articles from the backend.
-  const fetchArticles = async (pageNumber = 1) => {
+  const fetchArticles = useCallback(async (pageNumber = 1) => {
     setLoading(true);
     try {
       const response = await fetch(`http://localhost:5000/api/articles?page=${pageNumber}`, {
@@ -26,30 +25,26 @@ function ArticleList({ refreshSignal }) {
       } else {
         setArticles((prev) => [...prev, ...data]);
       }
-      // If fewer articles are returned than the limit, assume no more pages.
       setHasMore(data.length > 0);
     } catch (error) {
       console.error("Error fetching articles:", error);
     }
     setLoading(false);
-  };
+  }, []);
 
-  // Reset list when refreshSignal changes.
   useEffect(() => {
     setArticles([]);
     setPage(1);
     setHasMore(true);
     fetchArticles(1);
-  }, [refreshSignal]);
+  }, [refreshSignal, fetchArticles]);
 
-  // Fetch additional pages when page changes (except for initial load).
   useEffect(() => {
     if (page > 1) {
       fetchArticles(page);
     }
-  }, [page]);
+  }, [page, fetchArticles]);
 
-  // Intersection Observer for lazy loading.
   const lastArticleRef = useCallback(
     (node) => {
       if (loading) return;
@@ -64,7 +59,6 @@ function ArticleList({ refreshSignal }) {
     [loading, hasMore]
   );
 
-  // Handle delete article.
   const handleDelete = async (articleId) => {
     try {
       const response = await fetch(`http://localhost:5000/api/articles/${articleId}`, {
@@ -76,8 +70,9 @@ function ArticleList({ refreshSignal }) {
       if (!response.ok) {
         throw new Error(data.error || "Failed to delete article.");
       }
-      // Remove the deleted article from the local state.
-      setArticles((prevArticles) => prevArticles.filter((article) => article._id !== articleId));
+      setArticles((prevArticles) =>
+        prevArticles.filter((article) => article._id !== articleId)
+      );
     } catch (err) {
       console.error("Error deleting article:", err.message);
       alert("Failed to delete article: " + err.message);
@@ -88,9 +83,17 @@ function ArticleList({ refreshSignal }) {
     <div>
       {articles.map((article, index) => {
         const articleContent = (
-          <div key={article._id} className="border p-4 rounded-lg shadow-lg bg-gray-50 dark:bg-gray-800 mb-4">
-            <h3 className="font-semibold text-lg">{article.title}</h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{article.content}</p>
+          <div
+            key={article._id}
+            className="border p-4 rounded-lg shadow-lg bg-gray-100 dark:bg-gray-800 mb-4"
+          >
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+              {article.title}
+            </h3>
+
+            <p className="text-sm text-gray-800 dark:text-gray-200 mt-2">
+              {article.content}
+            </p>
             {user && user.role === "admin" && (
               <button
                 onClick={() => handleDelete(article._id)}
@@ -101,7 +104,6 @@ function ArticleList({ refreshSignal }) {
             )}
           </div>
         );
-
         if (index === articles.length - 1) {
           return (
             <div ref={lastArticleRef} key={article._id}>
@@ -111,8 +113,8 @@ function ArticleList({ refreshSignal }) {
         }
         return articleContent;
       })}
-      {loading && <p>Loading articles...</p>}
-      {!hasMore && <p>No more articles</p>}
+      {loading && <p className="text-gray-800 dark:text-gray-300">Loading articles...</p>}
+      {!hasMore && (<p className="text-gray-800 dark:text-gray-300">No more articles</p>)}
     </div>
   );
 }
