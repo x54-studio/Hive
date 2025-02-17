@@ -4,8 +4,7 @@ from flask import jsonify
 def register_error_handlers(app):
     @app.errorhandler(Exception)
     def handle_exception(e):
-        # Log error details here if desired
-        app.logger.error(f"Unhandled Exception: {str(e)}", exc_info=True)
+        app.logger.error("Unhandled Exception: %s", str(e), exc_info=True)
         response = {
             "error": "Internal Server Error",
             "message": str(e)
@@ -13,15 +12,15 @@ def register_error_handlers(app):
         return jsonify(response), 500
 
     @app.errorhandler(404)
-    def not_found(e):
+    def not_found(_):
         return jsonify({
             "error": "Not Found",
             "message": "The requested resource was not found."
-            }), 404
+        }), 404
 
     @app.errorhandler(400)
-    def bad_request(e):
+    def bad_request(_):
         return jsonify({
             "error": "Bad Request",
             "message": "The request is invalid or missing parameters."
-            }), 400
+        }), 400

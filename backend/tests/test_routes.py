@@ -1,27 +1,24 @@
+# tests/test_routes.py
 """
-tests/test_routes.py
-
 Integration tests for API routes.
 This file uses Flask's test client and forces the shared database instance to use
-the test database ("hive_test_db").
+the test database ("hive_db_test").
 """
 
 import unittest
 import json
+from pymongo import MongoClient
 from app import create_app
 from app.config import Config
-from pymongo import MongoClient
 
 
 class TestRoutesIntegration(unittest.TestCase):
     def setUp(self):
-        # Create the Flask app and test client.
         self.app = create_app()
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
 
     def tearDown(self):
-        # Clean up test collections.
         client = MongoClient(Config.TEST_MONGO_URI)
         test_db = client.get_database(Config.TEST_MONGO_DB_NAME)
         test_db.users.delete_many({})

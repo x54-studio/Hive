@@ -1,9 +1,11 @@
+# backend/tests/test_article_service.py
 import unittest
-import logging
 from services.article_service import ArticleService
+from utilities.logger import get_logger
+
+logger = get_logger(__name__)
 
 
-# A fake repository to simulate database operations for testing purposes.
 class FakeArticleRepository:
     def __init__(self):
         self.articles = {}
@@ -12,14 +14,13 @@ class FakeArticleRepository:
     def create_article(self, article_data):
         article_id = str(self.counter)
         self.counter += 1
-        # Simulate saving article by adding an _id field.
         self.articles[article_id] = article_data.copy()
         self.articles[article_id]["_id"] = article_id
         return article_id
 
     def get_all_articles(self, skip=0, limit=10):
         articles = list(self.articles.values())
-        return articles[skip:skip+limit]
+        return articles[skip:skip + limit]
 
     def get_article_by_id(self, article_id):
         return self.articles.get(article_id)
@@ -39,26 +40,22 @@ class FakeArticleRepository:
 
 class TestArticleService(unittest.TestCase):
     def setUp(self):
-        # Inject the fake repository into ArticleService.
+        logger.info("Setting up the ArticleService tests.")
         self.fake_repo = FakeArticleRepository()
         self.service = ArticleService(repository=self.fake_repo)
         self.author = "test_author"
-        logging.getLogger().setLevel(logging.INFO)
-        # logging.getLogger("services.user_service").setLevel(logging.WARNING)
 
     def test_create_article(self):
         result = self.service.create_article("Test Title", "Test Content", self.author)
         self.assertIn("message", result)
         self.assertIn("article_id", result)
         article_id = result["article_id"]
-        # Verify the article exists in the fake repository.
         article = self.fake_repo.get_article_by_id(article_id)
         self.assertIsNotNone(article)
         self.assertEqual(article["title"], "Test Title")
         self.assertEqual(article["author"], self.author)
 
     def test_get_all_articles(self):
-        # Create multiple articles.
         self.service.create_article("Title1", "Content1", self.author)
         self.service.create_article("Title2", "Content2", self.author)
         articles = self.service.get_all_articles()
@@ -75,9 +72,9 @@ class TestArticleService(unittest.TestCase):
     def test_update_article_success(self):
         create_result = self.service.create_article("Old Title", "Old Content", self.author)
         article_id = create_result["article_id"]
-        update_result = self.service.update_article(article_id,
-                                                    title="New Title",
-                                                    content="New Content")
+        update_result = self.service.update_article(
+            article_id, title="New Title", content="New Content"
+        )
         self.assertIn("message", update_result)
         article = self.fake_repo.get_article_by_id(article_id)
         self.assertEqual(article["title"], "New Title")

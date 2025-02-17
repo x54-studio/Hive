@@ -1,12 +1,15 @@
 import os
-from dotenv import load_dotenv
 from datetime import timedelta
+from dotenv import load_dotenv
 
 
 load_dotenv()
 
 
 class Config:
+    """
+    Application configuration settings.
+    """
 
     # Production Database
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
@@ -19,11 +22,11 @@ class Config:
     # Secret Keys
     SECRET_KEY = os.getenv("SECRET_KEY", "dupiarz_i_klockow_kupiacz_@#%^(32)")
     if SECRET_KEY == "your_secret_key":
-        raise Exception("Please set a secure SECRET_KEY in your environment variables!")
+        raise ValueError("Please set a secure SECRET_KEY in your environment variables!")
 
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt_dupiarz_i_klockow_kupiacz_^&*(56)")
     if JWT_SECRET_KEY == "your_jwt_secret_key":
-        raise Exception("Please set a secure JWT_SECRET_KEY in your environment variables!")
+        raise ValueError("Please set a secure JWT_SECRET_KEY in your environment variables!")
 
     # JWT configuration
     JWT_ALGORITHM = "HS256"
@@ -43,3 +46,20 @@ class Config:
     JWT_REFRESH_COOKIE_NAME = "refresh_token"
 
     DEBUG = os.getenv("FLASK_ENV") != "production"
+
+    def as_dict(self):
+        """
+        Return configuration variables as a dictionary.
+        """
+        return {key: getattr(self, key) for key in dir(self) if key.isupper()}
+
+    def get_jwt_config(self):
+        """
+        Return JWT configuration settings.
+        """
+        return {
+            "JWT_SECRET_KEY": self.JWT_SECRET_KEY,
+            "JWT_ALGORITHM": self.JWT_ALGORITHM,
+            "JWT_ACCESS_TOKEN_EXPIRES": self.JWT_ACCESS_TOKEN_EXPIRES,
+            "JWT_REFRESH_TOKEN_EXPIRES": self.JWT_REFRESH_TOKEN_EXPIRES,
+        }

@@ -31,18 +31,17 @@
         [FILE] user_service.py
     [DIR] tests
         [FILE] test_article_service.py
-        [FILE] test_backend_refactoring.py
         [FILE] test_cookie_set
         [FILE] test_routes.py
         [FILE] test_user_service.py
     [FILE] .env
     [FILE] .gitignore
+    [FILE] app.py
     [FILE] Dockerfile
     [FILE] package-lock.json
     [FILE] package.json
     [FILE] README.md
     [FILE] requirements.txt
-    [FILE] run.py
 [DIR] frontend
     [DIR] public
         [FILE] favicon.ico
@@ -64,9 +63,9 @@
         [DIR] styles
             [FILE] index.css
         [FILE] App.js
-        [FILE] AuthContext.js
+        [FILE] authContext.js
         [FILE] index.js
-        [FILE] ThemeContext.js
+        [FILE] themeContext.js
     [FILE] .gitignore
     [FILE] Dockerfile
     [FILE] package-lock.json
@@ -74,12 +73,14 @@
     [FILE] README.md
     [FILE] tailwind.config.js
     [FILE] tests.js
+[DIR] scripts
+    [FILE] script_create-frontend.ps1
+    [FILE] script_generateTreeStructure.ps1
+    [FILE] script_test_backend.ps1
+    [FILE] TreeStructure.txt
 [FILE] .flake8
 [FILE] .gitignore
+[FILE] .pylintrc
 [FILE] docker-compose.yml
-[FILE] generate_favicon.py
 [FILE] README.md
-[FILE] script_create-frontend.ps1
-[FILE] script_generateTreeStructure.ps1
-[FILE] script_test_backend.ps1
 [FILE] TreeStructure.txt
