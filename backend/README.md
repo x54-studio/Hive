@@ -1,6 +1,6 @@
-# Hive
+# Hive Backend
 
-Hive is a news platform built with a Flask backend and a React frontend. This repository contains the backend application along with supporting services, repositories, tests, and Docker configuration.
+Hive is a news platform backend built with Flask and MongoDB. This repository contains the API, business logic, data access layers, and supporting utilities for the Hive system.
 
 ## Project Structure
 
@@ -8,74 +8,83 @@ Hive is a news platform built with a Flask backend and a React frontend. This re
 backend/
 ├── app/
 │   ├── __init__.py         # Application factory and main setup
-│   ├── config.py           # Application configuration (loads .env)
+│   ├── config.py           # Configuration (loads environment variables)
+│   ├── routes.py           # API routes/endpoints
 │   ├── error_handlers.py   # Centralized error handling
-│   ├── logging_config.py   # Structured logging setup
-│   ├── models.py           # Data models (User, Article)
-│   ├── routes.py           # API endpoints
+│   ├── logging_config.py   # Logging configuration (integrated with utilities)
 │   └── static/
 │       └── swagger.json    # Swagger API documentation
-├── repositories/
-│   ├── base_article_repository.py
-│   ├── base_user_repository.py
-│   ├── db.py               # Database initialization
-│   ├── mongo_article_repository.py
-│   ├── mongo_user_repository.py
-│   └── proxy_user_repository.py
 ├── services/
-│   ├── article_service.py
-│   └── user_service.py
-├── tests/                  # Unit and integration tests
-│   ├── test_article_service.py
-│   ├── test_cookie_set.py
-│   ├── test_routes.py
-│   └── test_user_service.py
-├── .env                    # Environment variables (ignored in git)
-├── Dockerfile              # Dockerfile for backend container
-├── package.json            # Frontend and testing configuration
-├── README.md               # This documentation
-├── requirements.txt        # Python dependencies
-└── run.py                  # Entry point for the Flask app
+│   ├── article_service.py  # Business logic for articles
+│   └── user_service.py     # Business logic for user authentication and management
+├── repositories/
+│   ├── base_article_repository.py  # Abstract interface for article data access
+│   ├── base_user_repository.py     # Abstract interface for user data access
+│   ├── db.py                      # Database initialization
+│   ├── mongo_article_repository.py  # MongoDB implementation for articles
+│   └── mongo_user_repository.py     # MongoDB implementation for users
+├── utilities/
+│   ├── __init__.py         # Utilities package marker
+│   ├── custom_exceptions.py  # Custom exception definitions (e.g., RepositoryError)
+│   ├── logger.py           # Centralized logging utility
+│   └── config_manager.py   # Configuration management
+├── tests/
+│   ├── test_article_service.py     # Unit tests for article service
+│   ├── test_user_service.py        # Unit tests for user service
+│   └── test_integration_api.py      # Integration tests covering API endpoints
+└── README.md                # This file
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Python 3.11** or higher  
-- **Docker** (for containerized deployment)  
-- **MongoDB Atlas** (or local MongoDB for development)  
-- **Node.js** (if working with the React frontend)
+- **Python 3.11** or higher
+- **MongoDB** (local or MongoDB Atlas)
+- **Docker** (optional, for containerized deployment)
 
-### Environment Variables
+### Setup
 
-Create a `.env` file in the root directory (this file is ignored by Git). Below is an example:
+1. Clone the repository.
+2. Create a `.env` file in the `backend/` directory with the necessary environment variables. An example:
+   ```dotenv
+   SECRET_KEY=your_secret_key_here
+   JWT_SECRET_KEY=your_jwt_secret_key_here
+   MONGO_URI=mongodb://localhost:27017/
+   MONGO_DB_NAME=hive_db
+   TEST_MONGO_URI=mongodb://localhost:27017/
+   TEST_MONGO_DB_NAME=hive_db_test
+   FLASK_ENV=development
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```dotenv
-SECRET_KEY='your_secret_key_here'
-MONGO_URI="mongodb+srv://user:your_password@clusterm0.zrr90.mongodb.net/?retryWrites=true&w=majority&tls=true&appName=ClusterM0"
-TEST_MONGO_URI="mongodb://localhost:27017/"
-MONGO_DB_NAME="hive_db"
-TEST_MONGO_DB_NAME="hive_db_test"
-JWT_ACCESS_TOKEN_EXPIRES=1
-JWT_REFRESH_TOKEN_EXPIRES=3
-FLASK_ENV=development
+### Running the Application
+
+To run the Flask application locally:
+```bash
+python app/__init__.py
+```
+Alternatively, you can use Docker by building and running the container:
+```bash
+docker build -t hive-backend .
+docker run -p 5000:5000 hive-backend
 ```
 
-**SECRET_KEY**: Used for Flask sessions and CSRF protection.
-**MONGO_URI**: Connection string for MongoDB Atlas in production.
-**TEST_MONGO_URI**: Connection string for local testing.
-**JWT_ACCESS_TOKEN_EXPIRES / JWT_REFRESH_TOKEN_EXPIRES**: Expiration times for tokens (in minutes).
-**FLASK_ENV**: Set to production for production deployment; otherwise, use development.
+### Testing
 
-
-## Testing
-
-We use **unittest** for unit and integration tests. Our tests are organized in the `tests/` directory.
-
-### Running Tests
-
-To run all tests, execute:
-
+Run unit and integration tests with:
 ```bash
 python -m unittest discover -s tests
+```
+
+### API Documentation
+
+Access the Swagger UI at:
+```
+http://localhost:5000/api/docs
+```
+
+---
