@@ -2,27 +2,33 @@
   "swagger": "2.0",
   "info": {
     "title": "Hive API",
-    "description": "API documentation for Hive news platform",
+    "description": "API documentation for the Hive news platform",
     "version": "1.0.0"
   },
   "host": "localhost:5000",
-  "schemes": ["http"],
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "paths": {
-    "/api/articles": {
+    "/": {
       "get": {
-        "summary": "Fetch all news articles",
-        "description": "Returns a list of published news articles",
+        "summary": "Home route",
+        "description": "Returns a welcome message.",
         "responses": {
           "200": {
-            "description": "A list of articles",
+            "description": "Welcome message",
             "schema": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": { "type": "integer" },
-                  "title": { "type": "string" },
-                  "content": { "type": "string" }
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Welcome to Hive!"
                 }
               }
             }
@@ -30,29 +36,329 @@
         }
       }
     },
-    "/api/login": {
+    "/api/register": {
       "post": {
-        "summary": "User login",
-        "description": "Authenticates a user and returns a JWT token",
+        "summary": "User registration",
+        "description": "Registers a new user with username, email, and password.",
         "parameters": [
           {
-            "name": "credentials",
             "in": "body",
+            "name": "body",
+            "description": "User registration details",
+            "required": true,
             "schema": {
               "type": "object",
               "properties": {
                 "username": { "type": "string" },
+                "email": { "type": "string" },
                 "password": { "type": "string" }
+              },
+              "required": ["username", "email", "password"]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "user_id": { "type": "string" }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields"
+          },
+          "500": {
+            "description": "Internal server error during registration"
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "summary": "User login",
+        "description": "Authenticates a user and returns JWT access and refresh tokens.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User login credentials",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" },
+                "password": { "type": "string" }
+              },
+              "required": ["email", "password"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "access_token": { "type": "string" },
+                "refresh_token": { "type": "string" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or user not found"
+          }
+        }
+      }
+    },
+    "/api/refresh": {
+      "post": {
+        "summary": "Refresh JWT tokens",
+        "description": "Refreshes JWT access token using the refresh token (sent as a cookie).",
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "access_token": { "type": "string" },
+                "refresh_token": { "type": "string" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid refresh token"
+          }
+        }
+      }
+    },
+    "/api/articles": {
+      "get": {
+        "summary": "Get articles",
+        "description": "Retrieves a paginated list of articles.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (default is 1)",
+            "required": false,
+            "type": "integer",
+            "default": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of articles per page (default is 10)",
+            "required": false,
+            "type": "integer",
+            "default": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of articles",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "article_id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "author": { "type": "string" },
+                  "created_at": { "type": "string", "format": "date-time" },
+                  "updated_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error retrieving articles"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create article",
+        "description": "Creates a new article. Requires JWT authentication.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Article data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string" }
+              },
+              "required": ["title", "content"]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Article created successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "article_id": { "type": "string" }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing title or content"
+          },
+          "500": {
+            "description": "Error creating article"
+          }
+        }
+      }
+    },
+    "/api/articles/{article_id}": {
+      "get": {
+        "summary": "Get article by ID",
+        "description": "Retrieves an article by its ID.",
+        "parameters": [
+          {
+            "name": "article_id",
+            "in": "path",
+            "description": "ID of the article",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Article details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "article_id": { "type": "string" },
+                "title": { "type": "string" },
+                "content": { "type": "string" },
+                "author": { "type": "string" },
+                "created_at": { "type": "string", "format": "date-time" },
+                "updated_at": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "404": {
+            "description": "Article not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update article",
+        "description": "Updates an existing article. Requires JWT authentication.",
+        "parameters": [
+          {
+            "name": "article_id",
+            "in": "path",
+            "description": "ID of the article to update",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Article fields to update",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string" }
               }
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "JWT access token"
+            "description": "Article updated successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" }
+              }
+            }
+          },
+          "400": {
+            "description": "No data provided for update"
+          },
+          "404": {
+            "description": "Article not found or update failed"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete article",
+        "description": "Deletes an article. Requires JWT authentication.",
+        "parameters": [
+          {
+            "name": "article_id",
+            "in": "path",
+            "description": "ID of the article to delete",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Article deleted successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" }
+              }
+            }
+          },
+          "404": {
+            "description": "Article not found or deletion failed"
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "User logout",
+        "description": "Logs out the user by deleting JWT cookies.",
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string", "example": "Logged out successfully" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/protected": {
+      "get": {
+        "summary": "Protected route",
+        "description": "Returns user identity and JWT claims. Requires JWT authentication.",
+        "responses": {
+          "200": {
+            "description": "User details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string" },
+                "role": { "type": "string" }
+              }
+            }
           },
           "401": {
-            "description": "Invalid credentials"
+            "description": "Unauthorized"
           }
         }
       }

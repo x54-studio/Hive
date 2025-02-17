@@ -1,8 +1,8 @@
-# repositories/mongo_article_repository.py
 from utilities.logger import get_logger
 from utilities.custom_exceptions import RepositoryError
 from pymongo import errors
 from bson import ObjectId
+from bson.errors import InvalidId
 from .base_article_repository import BaseArticleRepository
 from .db import db
 
@@ -45,9 +45,15 @@ class MongoArticleRepository(BaseArticleRepository):
 
     def get_article_by_id(self, article_id):
         try:
-            article = self.articles.find_one(
-                {"_id": ObjectId(article_id)}
-            )
+            try:
+                obj_id = ObjectId(article_id)
+            except InvalidId:
+                logger.warning(
+                    "Invalid article ID format",
+                    extra={"article_id": article_id}
+                )
+                return None
+            article = self.articles.find_one({"_id": obj_id})
             if article:
                 article["_id"] = str(article["_id"])
                 return article
@@ -72,19 +78,13 @@ class MongoArticleRepository(BaseArticleRepository):
         except errors.PyMongoError as e:
             logger.error(
                 "Error updating article",
-                extra={
-                    "article_id": article_id,
-                    "update_data": update_data,
-                    "error": str(e)
-                }
+                extra={"article_id": article_id, "update_data": update_data, "error": str(e)}
             )
             raise RepositoryError(f"Error updating article: {str(e)}") from e
 
     def delete_article(self, article_id):
         try:
-            result = self.articles.delete_one(
-                {"_id": ObjectId(article_id)}
-            )
+            result = self.articles.delete_one({"_id": ObjectId(article_id)})
             return result.deleted_count > 0
         except errors.PyMongoError as e:
             logger.error(

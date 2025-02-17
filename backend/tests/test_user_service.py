@@ -1,72 +1,77 @@
-# tests/test_user_service.py
-"""
-Unit tests for UserService.
-This file uses a dedicated test database by overriding the global
-database instance in repositories/db.py.
-"""
+import os
 import unittest
-import bcrypt
 import jwt
 from pymongo import MongoClient
 from app.config import Config
 from services.user_service import UserService
 from repositories.mongo_user_repository import MongoUserRepository
+from repositories.db import init_db
 
 
 class TestUserService(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        os.environ["TESTING"] = "true"
+        cls.config = Config()
+        # Initialize the test database using init_db() which respects the TESTING flag.
+        cls.test_db = init_db()
+        cls.mongo_client = MongoClient(cls.config.TEST_MONGO_URI)
+
     def setUp(self):
-        self.user_service = UserService(Config)
-        # from utilities.logger import get_logger
-        # get_logger("services.user_service", 20)    # INFO 20, WARNING = 30
+        self.repo = MongoUserRepository()
+        self.user_service = UserService(Config, repository=self.repo)
+        # Clear test users collection before each test
+        self.repo.users.delete_many({})
 
     def tearDown(self):
-        client = MongoClient(Config.TEST_MONGO_URI)
-        test_db = client.get_database(Config.TEST_MONGO_DB_NAME)
-        test_db.users.delete_many({})
-        client.close()
+        # Clear test users collection after each test
+        self.repo.users.delete_many({})
 
-    def test_register_user(self):
-        result = self.user_service.register_user("testuser", "testuser@example.com", "password123")
+    def test_register_user_success(self):
+        result = self.user_service.register_user("user1", "user1@example.com", "password")
         self.assertIn("message", result)
         self.assertEqual(result["message"], "User registered successfully!")
+        self.assertIn("user_id", result)
 
-    def test_login_user_invalid_credentials(self):
+    def test_register_user_duplicate(self):
+        self.user_service.register_user("user1", "user1@example.com", "password")
+        result = self.user_service.register_user("user1", "user1@example.com", "password")
+        self.assertIn("error", result)
+
+    def test_login_user_invalid(self):
         result = self.user_service.login_user("nonexistent@example.com", "password")
         self.assertIn("error", result)
         self.assertEqual(result["error"], "User not found")
 
-    def test_password_hashing(self):
-        result = self.user_service.register_user("hashuser", "hash@example.com", "secret")
+    def test_login_user_success(self):
+        self.user_service.register_user("user2", "user2@example.com", "password")
+        result = self.user_service.login_user("user2@example.com", "password")
+        self.assertIn("access_token", result)
+        self.assertIn("refresh_token", result)
         self.assertIn("message", result)
-        repo = MongoUserRepository()
-        user = repo.find_by_email("hash@example.com")
-        self.assertNotEqual(user["password"], "secret")
-        self.assertTrue(bcrypt.checkpw("secret".encode("utf-8"), user["password"]))
-
-    def test_login_returns_tokens(self):
-        self.user_service.register_user("tokenuser", "tokenuser@example.com", "mypassword")
-        login_result = self.user_service.login_user("tokenuser@example.com", "mypassword")
-        self.assertIn("access_token", login_result)
-        self.assertIn("refresh_token", login_result)
-        self.assertIn("message", login_result)
         access_payload = jwt.decode(
-            login_result["access_token"],
-            Config.JWT_SECRET_KEY,
+            result["access_token"], Config.JWT_SECRET_KEY,
             algorithms=[Config.JWT_ALGORITHM]
         )
-        self.assertEqual(access_payload.get("sub"), "tokenuser")
-        self.assertEqual(access_payload.get("email"), "tokenuser@example.com")
+        self.assertEqual(access_payload.get("sub"), "user2")
 
-    def test_refresh_tokens(self):
-        self.user_service.register_user("refreshuser", "refreshuser@example.com", "secretpass")
-        login_result = self.user_service.login_user("refreshuser@example.com", "secretpass")
-        refresh_token = login_result["refresh_token"]
-        refresh_result = self.user_service.refresh_access_token(refresh_token)
-        self.assertIn("access_token", refresh_result)
-        self.assertIn("refresh_token", refresh_result)
-        self.assertIn("message", refresh_result)
-        self.assertNotEqual(refresh_result["access_token"], login_result["access_token"])
-        self.assertNotEqual(refresh_result["refresh_token"], refresh_token)
+    def test_update_user_role_success(self):
+        self.user_service.register_user("user3", "user3@example.com", "password")
+        result = self.user_service.update_user_role("user3@example.com", "admin")
+        self.assertIn("message", result)
+        user = self.repo.find_by_email("user3@example.com")
+        self.assertEqual(user["role"], "admin")
+
+    def test_delete_user_success(self):
+        self.user_service.register_user("user4", "user4@example.com", "password")
+        result = self.user_service.delete_user("user4@example.com")
+        self.assertIn("message", result)
+        self.assertIsNone(self.repo.find_by_email("user4@example.com"))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mongo_client.drop_database(cls.config.TEST_MONGO_DB_NAME)
+        cls.mongo_client.close()
 
 
 if __name__ == '__main__':

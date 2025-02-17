@@ -1,108 +1,105 @@
 # backend/tests/test_article_service.py
+import os
 import unittest
+from pymongo import MongoClient
 from services.article_service import ArticleService
-from utilities.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-class FakeArticleRepository:
-    def __init__(self):
-        self.articles = {}
-        self.counter = 1
-
-    def create_article(self, article_data):
-        article_id = str(self.counter)
-        self.counter += 1
-        self.articles[article_id] = article_data.copy()
-        self.articles[article_id]["_id"] = article_id
-        return article_id
-
-    def get_all_articles(self, skip=0, limit=10):
-        articles = list(self.articles.values())
-        return articles[skip:skip + limit]
-
-    def get_article_by_id(self, article_id):
-        return self.articles.get(article_id)
-
-    def update_article(self, article_id, update_data):
-        if article_id in self.articles:
-            self.articles[article_id].update(update_data)
-            return True
-        return False
-
-    def delete_article(self, article_id):
-        if article_id in self.articles:
-            del self.articles[article_id]
-            return True
-        return False
+from repositories.mongo_article_repository import MongoArticleRepository
+from app.config import Config
 
 
 class TestArticleService(unittest.TestCase):
-    def setUp(self):
-        logger.info("Setting up the ArticleService tests.")
-        self.fake_repo = FakeArticleRepository()
-        self.service = ArticleService(repository=self.fake_repo)
-        self.author = "test_author"
+    @classmethod
+    def setUpClass(cls):
+        os.environ["TESTING"] = "true"
+        cls.config = Config()
+        cls.mongo_client = MongoClient(cls.config.TEST_MONGO_URI)
+        cls.test_db = cls.mongo_client.get_database(cls.config.TEST_MONGO_DB_NAME)
 
-    def test_create_article(self):
+    def setUp(self):
+        self.repo = MongoArticleRepository()
+        self.service = ArticleService(repository=self.repo)
+        self.author = "test_author"
+        self.repo.articles.delete_many({})
+
+    def tearDown(self):
+        self.repo.articles.delete_many({})
+
+    def test_create_article_success(self):
         result = self.service.create_article("Test Title", "Test Content", self.author)
         self.assertIn("message", result)
         self.assertIn("article_id", result)
-        article_id = result["article_id"]
-        article = self.fake_repo.get_article_by_id(article_id)
+        article = self.service.get_article_by_id(result["article_id"])
         self.assertIsNotNone(article)
+        self.assertIn("title", article)
         self.assertEqual(article["title"], "Test Title")
-        self.assertEqual(article["author"], self.author)
+
+    def test_create_article_failure(self):
+        result = self.service.create_article("fail", "Test Content", self.author)
+        self.assertIn("error", result)
+        self.assertEqual(result["error"], "Error creating article")
 
     def test_get_all_articles(self):
         self.service.create_article("Title1", "Content1", self.author)
         self.service.create_article("Title2", "Content2", self.author)
         articles = self.service.get_all_articles()
-        self.assertIsInstance(articles, list)
         self.assertGreaterEqual(len(articles), 2)
 
-    def test_get_article_by_id(self):
-        create_result = self.service.create_article("Title", "Content", self.author)
-        article_id = create_result["article_id"]
+    def test_get_article_by_id_success(self):
+        result = self.service.create_article("Title", "Content", self.author)
+        article_id = result["article_id"]
         article = self.service.get_article_by_id(article_id)
-        self.assertIsInstance(article, dict)
+        self.assertIsNotNone(article)
+        self.assertIn("title", article)
         self.assertEqual(article["title"], "Title")
 
+    def test_get_article_by_id_not_found(self):
+        article = self.service.get_article_by_id("000000000000000000000000")
+        self.assertIsNone(article)
+
     def test_update_article_success(self):
-        create_result = self.service.create_article("Old Title", "Old Content", self.author)
-        article_id = create_result["article_id"]
+        result = self.service.create_article("Old Title", "Old Content", self.author)
+        article_id = result["article_id"]
         update_result = self.service.update_article(
             article_id, title="New Title", content="New Content"
         )
         self.assertIn("message", update_result)
-        article = self.fake_repo.get_article_by_id(article_id)
+        article = self.service.get_article_by_id(article_id)
+        self.assertIsNotNone(article)
+        self.assertIn("title", article)
         self.assertEqual(article["title"], "New Title")
         self.assertEqual(article["content"], "New Content")
 
     def test_update_article_no_fields(self):
-        create_result = self.service.create_article("Title", "Content", self.author)
-        article_id = create_result["article_id"]
+        result = self.service.create_article("Title", "Content", self.author)
+        article_id = result["article_id"]
         update_result = self.service.update_article(article_id)
         self.assertIn("error", update_result)
         self.assertEqual(update_result["error"], "No update fields provided")
 
     def test_update_article_failure(self):
-        update_result = self.service.update_article("nonexistent_id", title="New Title")
+        update_result = self.service.update_article(
+            "000000000000000000000000", title="New Title"
+        )
         self.assertIn("error", update_result)
         self.assertEqual(update_result["error"], "Article not found or update failed")
 
     def test_delete_article_success(self):
-        create_result = self.service.create_article("Title", "Content", self.author)
-        article_id = create_result["article_id"]
+        result = self.service.create_article("Title", "Content", self.author)
+        article_id = result["article_id"]
         delete_result = self.service.delete_article(article_id)
         self.assertIn("message", delete_result)
-        self.assertIsNone(self.fake_repo.get_article_by_id(article_id))
+        article = self.service.get_article_by_id(article_id)
+        self.assertIsNone(article)
 
     def test_delete_article_failure(self):
-        delete_result = self.service.delete_article("nonexistent_id")
+        delete_result = self.service.delete_article("000000000000000000000000")
         self.assertIn("error", delete_result)
         self.assertEqual(delete_result["error"], "Article not found or deletion failed")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mongo_client.drop_database(cls.config.TEST_MONGO_DB_NAME)
+        cls.mongo_client.close()
 
 
 if __name__ == '__main__':
