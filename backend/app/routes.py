@@ -5,7 +5,7 @@ from services.article_service import ArticleService
 from app.config import Config
 
 
-main = Blueprint('main', __name__)
+main = Blueprint("main", __name__)
 
 user_service = UserService(Config)
 article_service = ArticleService()
@@ -21,7 +21,9 @@ def register():
     data = request.get_json()
     if not data or not all(k in data for k in ("username", "email", "password")):
         return jsonify({"error": "Missing required fields"}), 400
-    result = user_service.register_user(data["username"], data["email"], data["password"])
+    result = user_service.register_user(
+        data["username"], data["email"], data["password"]
+    )
     status_code = 201 if "message" in result else 500
     return jsonify(result), status_code
 
@@ -39,12 +41,18 @@ def login():
         response_data["access_token"] = result["access_token"]
         response_data["refresh_token"] = result["refresh_token"]
     response = make_response(jsonify(response_data))
-    response.set_cookie("access_token", result["access_token"],
-                        httponly=True,
-                        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
-    response.set_cookie("refresh_token", result["refresh_token"],
-                        httponly=True,
-                        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
+    response.set_cookie(
+        "access_token",
+        result["access_token"],
+        httponly=True,
+        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()),
+    )
+    response.set_cookie(
+        "refresh_token",
+        result["refresh_token"],
+        httponly=True,
+        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()),
+    )
     return response
 
 
@@ -65,12 +73,18 @@ def refresh():
         response_data["refresh_token"] = result["refresh_token"]
 
     response = make_response(jsonify(response_data))
-    response.set_cookie("access_token", result["access_token"],
-                        httponly=True,
-                        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()))
-    response.set_cookie("refresh_token", result["refresh_token"],
-                        httponly=True,
-                        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()))
+    response.set_cookie(
+        "access_token",
+        result["access_token"],
+        httponly=True,
+        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES.total_seconds()),
+    )
+    response.set_cookie(
+        "refresh_token",
+        result["refresh_token"],
+        httponly=True,
+        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES.total_seconds()),
+    )
     return response
 
 
@@ -92,7 +106,9 @@ def create_article():
     data = request.get_json()
     if not data or not all(k in data for k in ("title", "content")):
         return jsonify({"error": "Missing title or content"}), 400
-    result = article_service.create_article(data["title"], data["content"], current_user)
+    result = article_service.create_article(
+        data["title"], data["content"], current_user
+    )
     status_code = 201 if "message" in result else 500
     return jsonify(result), status_code
 

@@ -21,7 +21,7 @@ class ArticleService:
                 "content": content,
                 "author": author,
                 "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc)
+                "updated_at": datetime.now(timezone.utc),
             }
             article_id = self.repo.create_article(article_data)
             logger.info(
@@ -39,7 +39,8 @@ class ArticleService:
         try:
             articles = self.repo.get_all_articles(skip=skip, limit=limit)
             logger.info(
-                "Fetched articles", extra={"page": page, "limit": limit, "count": len(articles)}
+                "Fetched articles",
+                extra={"page": page, "limit": limit, "count": len(articles)},
             )
             return articles
         except RepositoryError as e:
@@ -56,7 +57,8 @@ class ArticleService:
             return None
         except RepositoryError as e:
             logger.error(
-                "Error retrieving article", extra={"error": str(e), "article_id": article_id}
+                "Error retrieving article",
+                extra={"error": str(e), "article_id": article_id},
             )
             return None
 
@@ -68,7 +70,8 @@ class ArticleService:
             update_data["content"] = content
         if not update_data:
             logger.warning(
-                "No update fields provided for article", extra={"article_id": article_id}
+                "No update fields provided for article",
+                extra={"article_id": article_id},
             )
             return {"error": "No update fields provided"}
         update_data["updated_at"] = datetime.now(timezone.utc)
@@ -81,7 +84,8 @@ class ArticleService:
             return {"error": "Article not found or update failed"}
         except RepositoryError as e:
             logger.error(
-                "Error updating article", extra={"error": str(e), "article_id": article_id}
+                "Error updating article",
+                extra={"error": str(e), "article_id": article_id},
             )
             return {"error": "Error updating article"}
 
@@ -95,6 +99,7 @@ class ArticleService:
             return {"error": "Article not found or deletion failed"}
         except RepositoryError as e:
             logger.error(
-                "Error deleting article", extra={"error": str(e), "article_id": article_id}
+                "Error deleting article",
+                extra={"error": str(e), "article_id": article_id},
             )
             return {"error": "Error deleting article"}

@@ -102,5 +102,5 @@ class TestArticleService(unittest.TestCase):
         cls.mongo_client.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

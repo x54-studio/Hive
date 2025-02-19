@@ -21,16 +21,15 @@ class MongoArticleRepository(BaseArticleRepository):
         except errors.PyMongoError as e:
             logger.error(
                 "Error creating article",
-                extra={"article_data": article_data, "error": str(e)}
+                extra={"article_data": article_data, "error": str(e)},
             )
             raise RepositoryError(f"Error creating article: {str(e)}") from e
 
     def get_all_articles(self, skip=0, limit=10):
         try:
-            cursor = (self.articles.find({})
-                      .sort("created_at", -1)
-                      .skip(skip)
-                      .limit(limit))
+            cursor = (
+                self.articles.find({}).sort("created_at", -1).skip(skip).limit(limit)
+            )
             articles = []
             for article in cursor:
                 article["_id"] = str(article["_id"])
@@ -39,7 +38,7 @@ class MongoArticleRepository(BaseArticleRepository):
         except errors.PyMongoError as e:
             logger.error(
                 "Error retrieving articles",
-                extra={"skip": skip, "limit": limit, "error": str(e)}
+                extra={"skip": skip, "limit": limit, "error": str(e)},
             )
             raise RepositoryError(f"Error retrieving articles: {str(e)}") from e
 
@@ -49,36 +48,36 @@ class MongoArticleRepository(BaseArticleRepository):
                 obj_id = ObjectId(article_id)
             except InvalidId:
                 logger.warning(
-                    "Invalid article ID format",
-                    extra={"article_id": article_id}
+                    "Invalid article ID format", extra={"article_id": article_id}
                 )
                 return None
             article = self.articles.find_one({"_id": obj_id})
             if article:
                 article["_id"] = str(article["_id"])
                 return article
-            logger.warning(
-                "Article not found", extra={"article_id": article_id}
-            )
+            logger.warning("Article not found", extra={"article_id": article_id})
             return None
         except errors.PyMongoError as e:
             logger.error(
                 "Error retrieving article by ID",
-                extra={"article_id": article_id, "error": str(e)}
+                extra={"article_id": article_id, "error": str(e)},
             )
             raise RepositoryError(f"Error retrieving article by ID: {str(e)}") from e
 
     def update_article(self, article_id, update_data):
         try:
             result = self.articles.update_one(
-                {"_id": ObjectId(article_id)},
-                {"$set": update_data}
+                {"_id": ObjectId(article_id)}, {"$set": update_data}
             )
             return result.modified_count > 0
         except errors.PyMongoError as e:
             logger.error(
                 "Error updating article",
-                extra={"article_id": article_id, "update_data": update_data, "error": str(e)}
+                extra={
+                    "article_id": article_id,
+                    "update_data": update_data,
+                    "error": str(e),
+                },
             )
             raise RepositoryError(f"Error updating article: {str(e)}") from e
 
@@ -89,6 +88,6 @@ class MongoArticleRepository(BaseArticleRepository):
         except errors.PyMongoError as e:
             logger.error(
                 "Error deleting article",
-                extra={"article_id": article_id, "error": str(e)}
+                extra={"article_id": article_id, "error": str(e)},
             )
             raise RepositoryError(f"Error deleting article: {str(e)}") from e

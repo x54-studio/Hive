@@ -1,44 +1,44 @@
-import React, { useState, useContext } from "react";
-import { AuthContext } from "../AuthContext";
+import React, { useState, useContext } from 'react'
+import { AuthContext } from '../AuthContext'
 
 function AddArticle({ onArticleAdded }) {
-  const { user } = useContext(AuthContext);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [error, setError] = useState(null);
+  const { user } = useContext(AuthContext)
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [error, setError] = useState(null)
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     if (!title || !content) {
-      setError("Title and content cannot be empty!");
-      return;
+      setError('Title and content cannot be empty!')
+      return
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/articles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const response = await fetch('http://localhost:5000/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ title, content }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create article.");
+        throw new Error(data.error || 'Failed to create article.')
       }
 
-      setTitle("");
-      setContent("");
-      onArticleAdded();
+      setTitle('')
+      setContent('')
+      onArticleAdded()
     } catch (err) {
-      console.error("Error submitting article:", err.message);
-      setError(err.message);
+      console.error('Error submitting article:', err.message)
+      setError(err.message)
     }
-  };
+  }
 
-  if (!user || user.role !== "admin") return null;
+  if (!user || user.role !== 'admin') return null
 
   return (
     <form
@@ -69,7 +69,7 @@ function AddArticle({ onArticleAdded }) {
         Publish Article
       </button>
     </form>
-  );
+  )
 }
 
-export default AddArticle;
+export default AddArticle

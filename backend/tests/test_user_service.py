@@ -28,14 +28,18 @@ class TestUserService(unittest.TestCase):
         self.repo.users.delete_many({})
 
     def test_register_user_success(self):
-        result = self.user_service.register_user("user1", "user1@example.com", "password")
+        result = self.user_service.register_user(
+            "user1", "user1@example.com", "password"
+        )
         self.assertIn("message", result)
         self.assertEqual(result["message"], "User registered successfully!")
         self.assertIn("user_id", result)
 
     def test_register_user_duplicate(self):
         self.user_service.register_user("user1", "user1@example.com", "password")
-        result = self.user_service.register_user("user1", "user1@example.com", "password")
+        result = self.user_service.register_user(
+            "user1", "user1@example.com", "password"
+        )
         self.assertIn("error", result)
 
     def test_login_user_invalid(self):
@@ -50,8 +54,9 @@ class TestUserService(unittest.TestCase):
         self.assertIn("refresh_token", result)
         self.assertIn("message", result)
         access_payload = jwt.decode(
-            result["access_token"], Config.JWT_SECRET_KEY,
-            algorithms=[Config.JWT_ALGORITHM]
+            result["access_token"],
+            Config.JWT_SECRET_KEY,
+            algorithms=[Config.JWT_ALGORITHM],
         )
         self.assertEqual(access_payload.get("sub"), "user2")
 
@@ -74,5 +79,5 @@ class TestUserService(unittest.TestCase):
         cls.mongo_client.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -26,16 +26,13 @@ class IntegrationAPITest(unittest.TestCase):
         register_data = {
             "username": username,
             "email": user_email,
-            "password": user_password
+            "password": user_password,
         }
         reg_response = self.client.post("/api/register", json=register_data)
         self.assertEqual(reg_response.status_code, 201)
 
         # Login user and extract cookies
-        login_data = {
-            "email": user_email,
-            "password": user_password
-        }
+        login_data = {"email": user_email, "password": user_password}
         login_response = self.client.post("/api/login", json=login_data)
         self.assertEqual(login_response.status_code, 200)
         cookies = {}
@@ -57,7 +54,7 @@ class IntegrationAPITest(unittest.TestCase):
         register_data = {
             "username": "newadmin",
             "email": "newadmin@example.com",
-            "password": "password123"
+            "password": "password123",
         }
         response = self.client.post("/api/register", json=register_data)
         self.assertEqual(response.status_code, 201)
@@ -65,10 +62,7 @@ class IntegrationAPITest(unittest.TestCase):
         self.assertIn("message", data)
         self.assertIn("user_id", data)
 
-        login_data = {
-            "email": "newadmin@example.com",
-            "password": "password123"
-        }
+        login_data = {"email": "newadmin@example.com", "password": "password123"}
         response = self.client.post("/api/login", json=login_data)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
@@ -81,13 +75,10 @@ class IntegrationAPITest(unittest.TestCase):
         register_data = {
             "username": "refreshtester",
             "email": "refreshtester@example.com",
-            "password": "password123"
+            "password": "password123",
         }
         self.client.post("/api/register", json=register_data)
-        login_data = {
-            "email": "refreshtester@example.com",
-            "password": "password123"
-        }
+        login_data = {"email": "refreshtester@example.com", "password": "password123"}
         login_response = self.client.post("/api/login", json=login_data)
         self.assertEqual(login_response.status_code, 200)
 
@@ -112,8 +103,7 @@ class IntegrationAPITest(unittest.TestCase):
             f"refresh_token={refresh_data['refresh_token']}"
         )
         protected_response = self.client.get(
-            "/api/protected",
-            headers={"Cookie": cookie_header}
+            "/api/protected", headers={"Cookie": cookie_header}
         )
         self.assertEqual(protected_response.status_code, 200)
         protected_data = json.loads(protected_response.data)
@@ -122,12 +112,14 @@ class IntegrationAPITest(unittest.TestCase):
 
     def test_articles_crud(self):
         # Use helper to register and log in admin user and obtain auth header
-        cookie_header = self.get_auth_cookie_header("adminuser@example.com", "adminpass")
+        cookie_header = self.get_auth_cookie_header(
+            "adminuser@example.com", "adminpass"
+        )
 
         # Create Article
         article_data = {
             "title": "Integration Test Article",
-            "content": "This is a test article content."
+            "content": "This is a test article content.",
         }
         create_response = self.client.post(
             "/api/articles", json=article_data, headers={"Cookie": cookie_header}
@@ -146,7 +138,9 @@ class IntegrationAPITest(unittest.TestCase):
         # Update Article
         update_data = {"title": "Updated Integration Article"}
         update_response = self.client.put(
-            f"/api/articles/{article_id}", json=update_data, headers={"Cookie": cookie_header}
+            f"/api/articles/{article_id}",
+            json=update_data,
+            headers={"Cookie": cookie_header},
         )
         self.assertEqual(update_response.status_code, 200)
         update_resp_data = json.loads(update_response.data)

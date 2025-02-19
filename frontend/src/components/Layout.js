@@ -1,11 +1,9 @@
-import React from "react";
+import React from 'react'
 
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      {children}
-    </div>
-  );
-};
+    <div className="min-h-screen bg-white dark:bg-gray-900">{children}</div>
+  )
+}
 
-export default Layout;
+export default Layout

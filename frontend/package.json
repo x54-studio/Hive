@@ -14,7 +14,8 @@
     "start": "cross-env react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint ."
   },
   "eslintConfig": {
     "extends": [
@@ -35,12 +36,17 @@
     ]
   },
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "autoprefixer": "^10.4.20",
     "cross-env": "^7.0.3",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.4",
+    "globals": "^15.15.0",
     "jest": "^27.5.1",
     "postcss": "^8.5.1",
+    "prettier": "^3.5.1",
     "tailwindcss": "^3.4.17",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1",

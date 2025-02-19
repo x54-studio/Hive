@@ -1,7 +1,7 @@
 # repositories/db.py
 import os
-from utilities.logger import get_logger
 from pymongo import MongoClient
+from utilities.logger import get_logger
 
 
 logger = get_logger(__name__)

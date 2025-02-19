@@ -1,15 +1,15 @@
-import React, { useContext } from "react";
-import { AuthContext } from "../AuthContext";
+import React, { useContext } from 'react'
+import { AuthContext } from '../AuthContext'
 
 function Profile() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext)
 
   if (!user) {
     return (
       <p className="text-red-600 dark:text-red-400 text-center mt-8">
         Please log in to view your profile.
       </p>
-    );
+    )
   }
 
   return (
@@ -18,10 +18,10 @@ function Profile() {
         User Profile
       </h2>
       <p className="mb-2">
-        <strong>Username:</strong> {user.username || "N/A"}
+        <strong>Username:</strong> {user.username || 'N/A'}
       </p>
       <p className="mb-4">
-        <strong>Role:</strong> {user.role || "N/A"}
+        <strong>Role:</strong> {user.role || 'N/A'}
       </p>
       <pre className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 p-2 rounded w-full overflow-auto">
         {JSON.stringify(user, null, 2)}
@@ -33,7 +33,7 @@ function Profile() {
         Logout
       </button>
     </div>
-  );
+  )
 }
 
-export default Profile;
+export default Profile

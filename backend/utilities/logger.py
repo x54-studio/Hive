@@ -8,10 +8,10 @@ class UTCFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         ct = datetime.fromtimestamp(record.created, timezone.utc)
         if datefmt:
-            if '%f' in datefmt:
-                micro = ct.strftime('%f')
+            if "%f" in datefmt:
+                micro = ct.strftime("%f")
                 milli = micro[:3]
-                s = ct.strftime(datefmt.replace('%f', milli))
+                s = ct.strftime(datefmt.replace("%f", milli))
             else:
                 s = ct.strftime(datefmt)
         else:
@@ -38,7 +38,7 @@ def get_logger(name, level=None):
         handler = logging.StreamHandler(sys.stdout)
         formatter = UTCFormatter(
             fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S:%M.%f"
+            datefmt="%Y-%m-%d %H:%M:%S:%M.%f",
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)

@@ -38,5 +38,5 @@ class TestRoutesIntegration(unittest.TestCase):
         self.assertIn("error", data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

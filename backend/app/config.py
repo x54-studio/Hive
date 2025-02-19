@@ -22,16 +22,26 @@ class Config:
     # Secret Keys
     SECRET_KEY = os.getenv("SECRET_KEY", "dupiarz_i_klockow_kupiacz_@#%^(32)")
     if SECRET_KEY == "your_secret_key":
-        raise ValueError("Please set a secure SECRET_KEY in your environment variables!")
+        raise ValueError(
+            "Please set a secure SECRET_KEY in your environment variables!"
+        )
 
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt_dupiarz_i_klockow_kupiacz_^&*(56)")
+    JWT_SECRET_KEY = os.getenv(
+        "JWT_SECRET_KEY", "jwt_dupiarz_i_klockow_kupiacz_^&*(56)"
+    )
     if JWT_SECRET_KEY == "your_jwt_secret_key":
-        raise ValueError("Please set a secure JWT_SECRET_KEY in your environment variables!")
+        raise ValueError(
+            "Please set a secure JWT_SECRET_KEY in your environment variables!"
+        )
 
     # JWT configuration
     JWT_ALGORITHM = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "1")))
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(minutes=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", "3")))
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(
+        minutes=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "1"))
+    )
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(
+        minutes=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", "3"))
+    )
     JWT_TOKEN_LOCATION = ["cookies"]
 
     # Secure cookie settings: use production settings if FLASK_ENV is production

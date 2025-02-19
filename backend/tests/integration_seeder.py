@@ -20,15 +20,15 @@ def seed_users():
             "email": "testuser1@example.com",
             "password": "hashedpassword1",  # Dummy hash for testing
             "role": "admin",
-            "created_at": "2023-01-01T00:00:00Z"
+            "created_at": "2023-01-01T00:00:00Z",
         },
         {
             "username": "testuser2",
             "email": "testuser2@example.com",
             "password": "hashedpassword2",
             "role": "regular",
-            "created_at": "2023-01-01T00:00:00Z"
-        }
+            "created_at": "2023-01-01T00:00:00Z",
+        },
     ]
     users_collection.insert_many(test_users)
     client.close()
@@ -45,15 +45,15 @@ def seed_articles():
             "content": "Content for test article 1",
             "author": "testuser1",
             "created_at": "2023-01-02T00:00:00Z",
-            "updated_at": "2023-01-02T00:00:00Z"
+            "updated_at": "2023-01-02T00:00:00Z",
         },
         {
             "title": "Test Article 2",
             "content": "Content for test article 2",
             "author": "testuser2",
             "created_at": "2023-01-03T00:00:00Z",
-            "updated_at": "2023-01-03T00:00:00Z"
-        }
+            "updated_at": "2023-01-03T00:00:00Z",
+        },
     ]
     articles_collection.insert_many(test_articles)
     client.close()

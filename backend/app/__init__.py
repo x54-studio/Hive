@@ -21,8 +21,8 @@ def create_app():
 
     jwt.init_app(app)
 
-    swagger_url = '/api/docs'
-    api_url = '/static/swagger.json'
+    swagger_url = "/api/docs"
+    api_url = "/static/swagger.json"
     swagger_ui = get_swaggerui_blueprint(swagger_url, api_url)
     app.register_blueprint(swagger_ui, url_prefix=swagger_url)
 
@@ -32,7 +32,7 @@ def create_app():
 
     @app.after_request
     def set_security_headers(response):
-        if request.path.startswith('/api/docs'):
+        if request.path.startswith("/api/docs"):
             csp = (
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; "
                 "style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
@@ -45,7 +45,9 @@ def create_app():
         return response
 
     def shutdown_handler(signum, _):
-        app.logger.info("Shutdown initiated...", extra={"extra_data": {"signal": signum}})
+        app.logger.info(
+            "Shutdown initiated...", extra={"extra_data": {"signal": signum}}
+        )
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_handler)

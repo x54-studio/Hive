@@ -1,4 +1,4 @@
-## Canvas API Documentation
+## API Documentation
 
 ### Overview
 This document provides an updated overview of the Canvas API, including endpoint definitions, request and response schemas, error handling, and JWT-based authentication. It also includes updated design diagrams (architecture, component interaction, and data flow) to illustrate the internal application structure.
