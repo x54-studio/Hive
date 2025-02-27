@@ -5,17 +5,14 @@ from pymongo import MongoClient
 from app.config import Config
 from services.user_service import UserService
 from repositories.mongo_user_repository import MongoUserRepository
-from repositories.db import init_db
-
 
 class TestUserService(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.environ["TESTING"] = "true"
         cls.config = Config()
-        # Initialize the test database using init_db() which respects the TESTING flag.
-        cls.test_db = init_db()
-        cls.mongo_client = MongoClient(cls.config.TEST_MONGO_URI)
+        cls.mongo_client = MongoClient(cls.config.MONGO_URI)
+        cls.test_db = cls.mongo_client[cls.config.MONGO_DB_NAME]
 
     def setUp(self):
         self.repo = MongoUserRepository()
@@ -23,23 +20,15 @@ class TestUserService(unittest.TestCase):
         # Clear test users collection before each test
         self.repo.users.delete_many({})
 
-    def tearDown(self):
-        # Clear test users collection after each test
-        self.repo.users.delete_many({})
-
     def test_register_user_success(self):
-        result = self.user_service.register_user(
-            "user1", "user1@example.com", "password"
-        )
+        result = self.user_service.register_user("user1", "user1@example.com", "password")
         self.assertIn("message", result)
         self.assertEqual(result["message"], "User registered successfully!")
         self.assertIn("user_id", result)
 
     def test_register_user_duplicate(self):
         self.user_service.register_user("user1", "user1@example.com", "password")
-        result = self.user_service.register_user(
-            "user1", "user1@example.com", "password"
-        )
+        result = self.user_service.register_user("user1", "user1@example.com", "password")
         self.assertIn("error", result)
 
     def test_login_user_invalid(self):
@@ -73,9 +62,13 @@ class TestUserService(unittest.TestCase):
         self.assertIn("message", result)
         self.assertIsNone(self.repo.find_by_email("user4@example.com"))
 
+    def tearDown(self):
+        # Clear test users collection after each test
+        self.repo.users.delete_many({})
+
     @classmethod
     def tearDownClass(cls):
-        cls.mongo_client.drop_database(cls.config.TEST_MONGO_DB_NAME)
+        cls.mongo_client.drop_database(cls.config.MONGO_DB_NAME)
         cls.mongo_client.close()
 
 

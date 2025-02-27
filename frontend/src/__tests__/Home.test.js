@@ -1,26 +1,40 @@
-import '@testing-library/jest-dom'
-import React from 'react'
-import { render, waitFor, screen } from '@testing-library/react'
-import Home from '../pages/Home'
-import { AuthContext } from '../AuthContext'
+// src/__tests__/Home.test.js
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import Home from "../pages/Home";
+import { Provider } from "react-redux";
+import { store } from "../redux/store";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Mock ArticleList to simplify testing Home page layout
-jest.mock('../components/ArticleList', () => () => (
-  <div>ArticleList Component</div>
-))
+// Mock fetch to always return an empty array for articles
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([]),
+  })
+);
 
-test('Home page renders heading with correct text and theme classes', async () => {
-  const dummyUser = { username: 'adminUser', role: 'admin' }
+describe("Home page", () => {
+  test("renders heading with correct text and theme classes", async () => {
+    // Create a new QueryClient for testing, with retries disabled.
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
 
-  render(
-    <AuthContext.Provider value={{ user: dummyUser }}>
-      <Home />
-    </AuthContext.Provider>
-  )
+    render(
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <Home />
+        </QueryClientProvider>
+      </Provider>
+    );
 
-  await waitFor(() =>
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Welcome to Hive'
-    )
-  )
-})
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Welcome to Hive")
+    );
+  });
+});

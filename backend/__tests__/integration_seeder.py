@@ -5,8 +5,8 @@ from app.config import Config
 
 def get_test_db():
     config = Config()
-    client = MongoClient(config.TEST_MONGO_URI)
-    db = client[config.TEST_MONGO_DB_NAME]
+    client = MongoClient(config.MONGO_URI)
+    db = client[config.MONGO_DB_NAME]
     return db, client
 
 

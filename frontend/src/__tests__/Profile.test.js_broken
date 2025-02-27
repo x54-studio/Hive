@@ -1,0 +1,50 @@
+// src/__tests__/Profile.test.js
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import Profile from "../pages/Profile";
+import { Provider } from "react-redux";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
+import authReducer from "../redux/authSlice";
+
+// Create a test store with a root reducer.
+const rootReducer = combineReducers({
+  auth: authReducer,
+});
+const createTestStore = (preloadedState) =>
+  configureStore({
+    reducer: rootReducer,
+    preloadedState,
+  });
+
+describe("Profile Page", () => {
+  test("displays user information when logged in", () => {
+    const preloadedState = {
+      auth: { user: { username: "testUser", claims: { role: "admin" } } },
+    };
+    const store = createTestStore(preloadedState);
+    render(
+      <Provider store={store}>
+        <Profile />
+      </Provider>
+    );
+    // Check that the Profile page shows the username and claims header.
+    expect(screen.getByText(/Username:/i)).toBeInTheDocument();
+    expect(screen.getByText(/testUser/i)).toBeInTheDocument();
+    // Updated to look for "Claims:" instead of "Role:".
+    expect(screen.getByText(/Claims:/i)).toBeInTheDocument();
+    expect(screen.getByText(/admin/i)).toBeInTheDocument();
+  });
+
+  test("displays message when not logged in", () => {
+    const preloadedState = {
+      auth: { user: null },
+    };
+    const store = createTestStore(preloadedState);
+    render(
+      <Provider store={store}>
+        <Profile />
+      </Provider>
+    );
+    expect(screen.getByText(/Please log in to view your profile/i)).toBeInTheDocument();
+  });
+});

@@ -4,7 +4,7 @@ from pymongo import errors
 from bson import ObjectId
 from bson.errors import InvalidId
 from .base_article_repository import BaseArticleRepository
-from .db import db
+from .db import get_db
 
 
 logger = get_logger(__name__)
@@ -12,7 +12,8 @@ logger = get_logger(__name__)
 
 class MongoArticleRepository(BaseArticleRepository):
     def __init__(self):
-        self.articles = db.articles
+        self.db = get_db()  # Use the getter function to initialize the database
+        self.articles = self.db.articles
 
     def create_article(self, article_data):
         try:

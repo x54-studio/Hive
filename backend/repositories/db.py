@@ -1,26 +1,26 @@
-# repositories/db.py
-import os
 from pymongo import MongoClient
 from utilities.logger import get_logger
 
-
 logger = get_logger(__name__)
 
+_mongo_client = None
+_db = None
 
 def init_db():
-    is_testing = os.getenv("TESTING", "false").lower() == "true"
-    if is_testing:
-        mongo_uri = os.getenv("TEST_MONGO_URI", "mongodb://localhost:27017/")
-        mongo_db_name = os.getenv("TEST_MONGO_DB_NAME", "hive_db_test")
-    else:
-        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-        mongo_db_name = os.getenv("MONGO_DB_NAME", "hive_db")
-    logger.info("is_testing: %s", is_testing)
-    client = MongoClient(mongo_uri)
-    return client[mongo_db_name]
+    """Initialize the MongoDB client and database only once."""
+    global _mongo_client, _db
+    if _mongo_client is None:
+        # Lazy import of Config to break circular dependency
+        from app.config import Config
+        _mongo_client = MongoClient(Config.MONGO_URI)
+        _db = _mongo_client[Config.MONGO_DB_NAME]
+        logger.info("Connected to database: %s", _db.name)
+        print(f"Connected to database: {_db.name}")
+    return _mongo_client, _db
 
-
-db = init_db()
-
-print(f"Connected to database: {db.name}")
-logger.info("Connected to database: %s", db.name)
+def get_db():
+    """Return the initialized database instance."""
+    global _db
+    if _db is None:
+        init_db()
+    return _db

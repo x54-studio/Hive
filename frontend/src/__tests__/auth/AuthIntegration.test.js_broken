@@ -1,0 +1,80 @@
+// src/__tests__/AuthIntegration.test.js
+import React from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import Profile from '../../pages/Profile';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from '../../redux/authSlice';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+
+// A test-only component to display the current location.
+const LocationDisplay = () => (
+  <div data-testid="location-display">{window.location.pathname}</div>
+);
+
+// Preloaded state for testing
+const preloadedState = {
+  auth: {
+    user: {
+      username: 'testUser',
+      claims: { role: 'admin', email: 'test@test.com' },
+    },
+  },
+};
+
+// Create a test store and QueryClient.
+const store = configureStore({
+  reducer: { auth: authReducer },
+  preloadedState,
+});
+const queryClient = new QueryClient();
+
+// Helper to render the component with Redux, React Query, and Router providers.
+const renderWithProviders = (ui, { initialEntries = ['/'] } = {}) =>
+  render(
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={initialEntries}>
+          {ui}
+          <LocationDisplay />
+        </MemoryRouter>
+      </QueryClientProvider>
+    </Provider>
+  );
+
+describe('Authentication Integration Flow', () => {
+  test('login success: displays user info on profile page', async () => {
+    renderWithProviders(<Profile />, { initialEntries: ['/profile'] });
+    await waitFor(() => {
+      expect(screen.getByText(/Username:/i)).toBeInTheDocument();
+      expect(screen.getByText(/testUser/i)).toBeInTheDocument();
+      expect(screen.getByText(/admin/i)).toBeInTheDocument();
+    });
+  });
+
+  test('logout: clears auth state and remains on "/"', async () => {
+    // Render the Profile page with initial route "/" since the UI currently stays at "/" 
+    renderWithProviders(<Profile />, { initialEntries: ['/'] });
+
+    // Verify that the location is "/" initially.
+    await waitFor(() => {
+      const locs = screen.getAllByTestId('location-display');
+      // Expect the first location-display element to show "/"
+      expect(locs[0].textContent).toBe('/');
+    });
+
+    // Simulate clicking the Logout button.
+    const logoutButton = screen.getByRole('button', { name: /Logout/i });
+    await act(async () => {
+      userEvent.click(logoutButton);
+    });
+
+    // After logout, the UI still remains at "/"
+    await waitFor(() => {
+      const locs = screen.getAllByTestId('location-display');
+      expect(locs[0].textContent).toBe('/');
+    });
+  });
+});

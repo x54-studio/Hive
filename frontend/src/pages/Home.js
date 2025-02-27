@@ -1,16 +1,18 @@
-import React, { useContext } from 'react'
-import { AuthContext } from '../AuthContext'
-import AddArticle from '../components/AddArticle'
-import ArticleList from '../components/ArticleList'
-import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+// src/pages/Home.js
+import React from "react";
+import { useSelector } from "react-redux";
+import AddArticle from "../components/AddArticle";
+import ArticleList from "../components/ArticleList";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Home = () => {
-  const { user } = useContext(AuthContext)
+  // Get the authenticated user from Redux.
+  const user = useSelector((state) => state.auth.user);
 
   const handleArticleAdded = () => {
-    toast.success('Article added successfully!')
-  }
+    toast.success("Article added successfully!");
+  };
 
   return (
     <div className="p-6">
@@ -23,7 +25,7 @@ const Home = () => {
         </p>
       </header>
       <main>
-        {user && user.role === 'admin' && (
+        {user && user.claims && user.claims.role === "admin" && (
           <div className="mb-6">
             <AddArticle onArticleAdded={handleArticleAdded} />
           </div>
@@ -34,7 +36,7 @@ const Home = () => {
       </main>
       <ToastContainer position="top-right" autoClose={5000} />
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

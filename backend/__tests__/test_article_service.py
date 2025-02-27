@@ -6,14 +6,14 @@ from services.article_service import ArticleService
 from repositories.mongo_article_repository import MongoArticleRepository
 from app.config import Config
 
-
 class TestArticleService(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.environ["TESTING"] = "true"
         cls.config = Config()
-        cls.mongo_client = MongoClient(cls.config.TEST_MONGO_URI)
-        cls.test_db = cls.mongo_client.get_database(cls.config.TEST_MONGO_DB_NAME)
+        # Use the global client from Config for test setup.
+        cls.mongo_client = MongoClient(cls.config.MONGO_URI)
+        cls.test_db = cls.mongo_client.get_database(cls.config.MONGO_DB_NAME)
 
     def setUp(self):
         self.repo = MongoArticleRepository()
@@ -98,9 +98,9 @@ class TestArticleService(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mongo_client.drop_database(cls.config.TEST_MONGO_DB_NAME)
+        cls.mongo_client.drop_database(cls.config.MONGO_DB_NAME)
         cls.mongo_client.close()
-
+        # Removed extra client.close() call since cls.mongo_client is our client.
 
 if __name__ == "__main__":
     unittest.main()

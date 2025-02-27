@@ -1,38 +1,40 @@
+# app/__init__.py
 import signal
 import sys
 from flask import Flask, request
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-from app.routes import main  # Blueprint with API routes
 from app.config import Config
 from app.error_handlers import register_error_handlers
-
+from app.routes import init_app  # Use our routes initializer
 
 jwt = JWTManager()
 
-
 def create_app():
-
     app = Flask(__name__)
     app.config.from_object(Config)
-
     CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
-
     jwt.init_app(app)
 
-    swagger_url = "/api/docs"
-    api_url = "/static/swagger.json"
+    # Swagger UI setup.
+    swagger_url = '/api/docs'
+    api_url = '/static/swagger.json'
     swagger_ui = get_swaggerui_blueprint(swagger_url, api_url)
     app.register_blueprint(swagger_ui, url_prefix=swagger_url)
 
-    app.register_blueprint(main)
+    # Initialize routes.
+    init_app(app)
+
+    # Instantiate ArticleService after routes have been registered.
+    from services.article_service import ArticleService  # Now safe to import
+    app.article_service = ArticleService()
 
     register_error_handlers(app)
 
     @app.after_request
     def set_security_headers(response):
-        if request.path.startswith("/api/docs"):
+        if request.path.startswith('/api/docs'):
             csp = (
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; "
                 "style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
@@ -45,9 +47,7 @@ def create_app():
         return response
 
     def shutdown_handler(signum, _):
-        app.logger.info(
-            "Shutdown initiated...", extra={"extra_data": {"signal": signum}}
-        )
+        app.logger.info("Shutdown initiated...", extra={"extra_data": {"signal": signum}})
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_handler)

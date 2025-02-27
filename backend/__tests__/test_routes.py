@@ -18,13 +18,6 @@ class TestRoutesIntegration(unittest.TestCase):
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
 
-    def tearDown(self):
-        client = MongoClient(Config.TEST_MONGO_URI)
-        test_db = client.get_database(Config.TEST_MONGO_DB_NAME)
-        test_db.users.delete_many({})
-        test_db.articles.delete_many({})
-        client.close()
-
     def test_home_route(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
@@ -36,6 +29,13 @@ class TestRoutesIntegration(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
         self.assertIn("error", data)
+
+    def tearDown(self):
+        client = MongoClient(Config.MONGO_URI)
+        test_db = client.get_database(Config.MONGO_DB_NAME)
+        test_db.users.delete_many({})
+        test_db.articles.delete_many({})
+        client.close()
 
 
 if __name__ == "__main__":

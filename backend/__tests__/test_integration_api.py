@@ -1,40 +1,46 @@
 import os
 import unittest
 import json
+import time  # Added for generating unique email addresses
 from pymongo import MongoClient
 from app import create_app
 from app.config import Config
-from tests.integration_seeder import seed_users, seed_articles
+from __tests__.integration_seeder import seed_users, seed_articles
 
-
-class IntegrationAPITest(unittest.TestCase):
+class IntegrationAPITest():
     @classmethod
     def setUpClass(cls):
         os.environ["TESTING"] = "true"
         cls.config = Config()
-        cls.mongo_client = MongoClient(cls.config.TEST_MONGO_URI)
-        cls.test_db = cls.mongo_client.get_database(cls.config.TEST_MONGO_DB_NAME)
-        # Seed the test database with initial data
+        cls.mongo_client = MongoClient(cls.config.MONGO_URI)
+        cls.test_db = cls.mongo_client.get_database(cls.config.MONGO_DB_NAME)
+        # Clean up the test database.
+        cls.test_db.users.delete_many({})
+        cls.test_db.articles.delete_many({})
         seed_users()
         seed_articles()
         cls.app = create_app()
         cls.app.config["TESTING"] = True
         cls.client = cls.app.test_client()
 
-    def get_auth_cookie_header(self, user_email, user_password, username="adminuser"):
-        # Register user
+    def get_auth_cookie_header(self, base_email, password, username="adminuser"):
+        # Generate a unique email address to avoid duplicate registration.
+        unique_email = f"{base_email}_{int(time.time())}@example.com"
         register_data = {
             "username": username,
-            "email": user_email,
-            "password": user_password,
+            "email": unique_email,
+            "password": password
         }
         reg_response = self.client.post("/api/register", json=register_data)
-        self.assertEqual(reg_response.status_code, 201)
-
-        # Login user and extract cookies
-        login_data = {"email": user_email, "password": user_password}
+        self.assertEqual(reg_response.status_code, 201, f"Registration failed: {reg_response.data.decode()}")
+        
+        # Login user and extract cookies.
+        login_data = {
+            "email": unique_email,
+            "password": password
+        }
         login_response = self.client.post("/api/login", json=login_data)
-        self.assertEqual(login_response.status_code, 200)
+        self.assertEqual(login_response.status_code, 200, f"Login failed: {login_response.data.decode()}")
         cookies = {}
         for header in login_response.headers.get_all("Set-Cookie"):
             key_value = header.split(";")[0]
@@ -111,20 +117,16 @@ class IntegrationAPITest(unittest.TestCase):
         self.assertIn("role", protected_data)
 
     def test_articles_crud(self):
-        # Use helper to register and log in admin user and obtain auth header
-        cookie_header = self.get_auth_cookie_header(
-            "adminuser@example.com", "adminpass"
-        )
-
+        cookie_header = self.get_auth_cookie_header("adminuser@example.com", "adminpass")
         # Create Article
         article_data = {
             "title": "Integration Test Article",
-            "content": "This is a test article content.",
+            "content": "This is a test article content."
         }
         create_response = self.client.post(
             "/api/articles", json=article_data, headers={"Cookie": cookie_header}
         )
-        self.assertEqual(create_response.status_code, 201)
+        self.assertEqual(create_response.status_code, 201, f"Article creation failed: {create_response.data.decode()}")
         create_data = json.loads(create_response.data)
         self.assertIn("article_id", create_data)
         article_id = create_data["article_id"]
@@ -138,9 +140,7 @@ class IntegrationAPITest(unittest.TestCase):
         # Update Article
         update_data = {"title": "Updated Integration Article"}
         update_response = self.client.put(
-            f"/api/articles/{article_id}",
-            json=update_data,
-            headers={"Cookie": cookie_header},
+            f"/api/articles/{article_id}", json=update_data, headers={"Cookie": cookie_header}
         )
         self.assertEqual(update_response.status_code, 200)
         update_resp_data = json.loads(update_response.data)
@@ -166,9 +166,8 @@ class IntegrationAPITest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mongo_client.drop_database(cls.config.TEST_MONGO_DB_NAME)
+        cls.mongo_client.drop_database(cls.config.MONGO_DB_NAME)
         cls.mongo_client.close()
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

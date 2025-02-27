@@ -1,8 +1,8 @@
-module.exports = {
-  useNavigate: () => jest.fn(),
-  // Add any other exports that your components might import from react-router-dom
-  Link: ({ children, ...props }) => <a {...props}>{children}</a>,
-  BrowserRouter: ({ children }) => <div>{children}</div>,
-  Routes: ({ children }) => <div>{children}</div>,
-  Route: ({ element }) => element,
-}
+import React from "react";
+
+export const Link = ({ children, ...props }) => <a {...props}>{children}</a>;
+export const BrowserRouter = ({ children }) => <div>{children}</div>;
+export const MemoryRouter = ({ children }) => <div>{children}</div>;
+export const Routes = ({ children }) => <div>{children}</div>;
+export const Route = ({ element }) => element;
+export const useLocation = () => ({ pathname: "/" });

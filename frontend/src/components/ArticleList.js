@@ -1,138 +1,83 @@
 // src/components/ArticleList.js
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useContext,
-} from 'react'
-import { AuthContext } from '../AuthContext'
+import React from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import { fetchArticles } from "../api/articles"; // Ensure this file exports your fetchArticles function
 
-function ArticleList({ refreshSignal }) {
-  const { user } = useContext(AuthContext)
-  const [articles, setArticles] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const observer = useRef()
+const ArticleList = ({ refreshSignal }) => {
+  // Retrieve current user from Redux
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.claims?.role === "admin";
+  const queryClient = useQueryClient();
 
-  const fetchArticles = useCallback(async (pageNumber = 1) => {
-    setLoading(true)
+  // Use React Query's useInfiniteQuery with the object signature (v5)
+  const { data, error, status } = useInfiniteQuery({
+    queryKey: ["articles", refreshSignal],
+    queryFn: fetchArticles,
+    // Adjust getNextPageParam based on your API response (if pagination is used)
+    getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
+  });
+
+  // Function to handle deletion of an article
+  const handleDelete = async (id) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/articles?page=${pageNumber}`,
-        {
-          credentials: 'include',
-        }
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch articles.')
-      }
-      const data = await response.json()
-      if (pageNumber === 1) {
-        setArticles(data)
-      } else {
-        setArticles((prev) => [...prev, ...data])
-      }
-      setHasMore(data.length > 0)
-    } catch (error) {
-      console.error('Error fetching articles:', error)
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    setArticles([])
-    setPage(1)
-    setHasMore(true)
-    fetchArticles(1)
-  }, [refreshSignal, fetchArticles])
-
-  useEffect(() => {
-    if (page > 1) {
-      fetchArticles(page)
-    }
-  }, [page, fetchArticles])
-
-  const lastArticleRef = useCallback(
-    (node) => {
-      if (loading) return
-      if (observer.current) observer.current.disconnect()
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prevPage) => prevPage + 1)
-        }
-      })
-      if (node) observer.current.observe(node)
-    },
-    [loading, hasMore]
-  )
-
-  const handleDelete = async (articleId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/articles/${articleId}`,
-        {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        }
-      )
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete article.')
-      }
-      setArticles((prevArticles) =>
-        prevArticles.filter((article) => article._id !== articleId)
-      )
+      await axios.delete(`http://localhost:5000/api/articles/${id}`, {
+        withCredentials: true,
+      });
+      // Invalidate the articles query to force a refetch
+      queryClient.invalidateQueries({ queryKey: ["articles"] });
     } catch (err) {
-      console.error('Error deleting article:', err.message)
-      alert('Failed to delete article: ' + err.message)
+      console.error("Error deleting article:", err);
     }
+  };
+
+  if (status === "loading" || status === "pending") {
+    return <p>Loading articles...</p>;
   }
 
+  if (error) {
+    return <p>Error: {error.message}</p>;
+  }
+
+  // Ensure data.pages is an array of pages
+  const pages = Array.isArray(data.pages) ? data.pages : [data];
+  const allArticles = pages.flat();
+
   return (
-    <div>
-      {articles.map((article, index) => {
-        const articleContent = (
-          <div
-            key={article._id}
-            className="border p-4 rounded-lg shadow-lg bg-gray-100 dark:bg-gray-800 mb-4"
-          >
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-              {article.title}
-            </h3>
-
-            <p className="text-sm text-gray-800 dark:text-gray-200 mt-2">
-              {article.content}
-            </p>
-            {user && user.role === 'admin' && (
-              <button
-                onClick={() => handleDelete(article._id)}
-                className="bg-red-500 text-white px-3 py-1 mt-2 rounded"
-              >
-                Delete
-              </button>
-            )}
-          </div>
-        )
-        if (index === articles.length - 1) {
-          return (
-            <div ref={lastArticleRef} key={article._id}>
-              {articleContent}
-            </div>
-          )
+    <div className="space-y-6">
+      {allArticles.map((article) => (
+        <div
+          key={article._id}
+          className="border rounded-lg shadow-lg p-4 bg-white dark:bg-gray-800"
+        >
+          <h3 className="font-bold text-xl text-gray-900 dark:text-gray-100">
+            {article.title}
+          </h3>
+          <p className="mt-2 text-gray-700 dark:text-gray-300">
+            {article.content}
+          </p>
+          {isAdmin && (
+            <button
+              onClick={() => handleDelete(article._id)}
+              className="bg-red-500 text-white px-3 py-1 mt-2 rounded"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      ))}
+      {/* Example "Load More" button (if using pagination) */}
+      <button
+        onClick={() =>
+          queryClient.fetchQuery({ queryKey: ["articles"] })
         }
-        return articleContent
-      })}
-      {loading && (
-        <p className="text-gray-800 dark:text-gray-300">Loading articles...</p>
-      )}
-      {!hasMore && (
-        <p className="text-gray-800 dark:text-gray-300">No more articles</p>
-      )}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        Load More
+      </button>
     </div>
-  )
-}
+  );
+};
 
-export default ArticleList
+export default ArticleList;
