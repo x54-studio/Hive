@@ -31,28 +31,31 @@ def login():
     data = request.get_json()
     if not data or not all(k in data for k in ("username_or_email", "password")):
         return jsonify({"error": "Missing email or password"}), 400
-
-    username_or_email = data["username_or_email"]
-    password = data["password"]
-
-    result = user_service.login_user(username_or_email, password)
+    result = user_service.login_user(data["username_or_email"], data["password"])
     if "error" in result:
-        if result["error"] in ["User not found", "Invalid credentials"]:
-            return jsonify(result), 401
-        return jsonify(result), 400
+        return jsonify(result), 401
 
-    # On success, set cookies:
     response_data = {"message": result["message"]}
-    # If in testing mode, also return tokens in JSON
+    # In production, do NOT return tokens in JSON
+    # but always in testing or other environments
     if Config.TESTING:
         response_data["access_token"] = result["access_token"]
         response_data["refresh_token"] = result["refresh_token"]
 
-    resp = make_response(jsonify(response_data), 200)
-    # Set the cookies
-    resp.set_cookie("access_token", result["access_token"], httponly=True)
-    resp.set_cookie("refresh_token", result["refresh_token"], httponly=True)
-    return resp
+    resp = make_response(jsonify(response_data))
+    resp.set_cookie(
+        "access_token",
+        result["access_token"],
+        httponly=True,
+        max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES),
+    )
+    resp.set_cookie(
+        "refresh_token",
+        result["refresh_token"],
+        httponly=True,
+        max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES),
+    )
+    return resp, 200
 
 
 @user_routes.route("/api/logout", methods=["POST"])
