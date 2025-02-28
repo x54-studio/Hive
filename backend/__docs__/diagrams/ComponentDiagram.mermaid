@@ -1,0 +1,20 @@
+graph TD
+    A[Client] -->|HTTP Requests| B[Flask Application]
+    B --> C[API Routes]
+    B --> D[Application Factory]
+    C --> E[User Routes]
+    C --> F[Article Routes]
+    E --> G[UserService]
+    F --> H[ArticleService]
+    G --> I[MongoUserRepository]
+    H --> J[MongoArticleRepository]
+    I --> K[MongoDB]
+    J --> K
+    B --> L[Error Handlers]
+    B --> M["Utilities <br/> (Logger, Exceptions)"]
+    A --> N[Swagger UI]
+    subgraph CI/CD Pipeline
+        O[GitHub Actions]
+        P[Coverage Report]
+    end
+    O --> B

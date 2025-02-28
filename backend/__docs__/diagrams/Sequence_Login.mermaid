@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant C as Client
+    participant R as /api/login Route
+    participant S as UserService
+    participant U as MongoUserRepository
+    participant DB as Database
+    participant B as Bcrypt & JWT
+
+    C->>R: POST /api/login<BR>{username_or_email, password}
+    R->>S: login_user(username_or_email, password)
+    S->>U: find_by_email/username(username_or_email)
+    U->>DB: Query user collection
+    DB-->>U: Return user document (if found)
+    U-->>S: Return user document
+    alt User not found
+        S-->>R: {"error": "User not found"}
+        R-->>C: 401 {"error": "User not found"}
+    else Valid user found
+        S->>B: Verify password<BR>(bcrypt.checkpw)
+        alt Password valid
+            S->>B: Generate JWT tokens<BR>(access & refresh)
+            S->>U: store_refresh_token(username, hashed_refresh)
+            U->>DB: Update user's refresh token field
+            DB-->>U: Acknowledgment
+            S-->>R: {"message": "Login successful",<BR>"access_token": "...",<BR>"refresh_token": "..."}
+            R-->>C: 200 {"message": "Login successful",<BR>"access_token": "...",<BR>"refresh_token": "..."}
+        else Password invalid
+            S-->>R: {"error": "Invalid credentials"}
+            R-->>C: 401 {"error": "Invalid credentials"}
+        end
+    end

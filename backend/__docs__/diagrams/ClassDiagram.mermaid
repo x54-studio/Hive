@@ -1,0 +1,78 @@
+classDiagram
+    class Config {
+      +SECRET_KEY : string
+      +JWT_SECRET_KEY : string
+      +TESTING : bool
+      +MONGO_URI : string
+      +MONGO_DB_NAME : string
+      +...()
+    }
+
+    class Application {
+      +create_app() : FlaskApp
+    }
+
+    class ArticleService {
+      +create_article(title, content, author) : dict
+      +get_all_articles(page, limit) : list
+      +get_article_by_id(article_id) : dict
+      +update_article(article_id, title, content) : dict
+      +delete_article(article_id) : dict
+    }
+    
+    class UserService {
+      +register_user(username, email, password) : dict
+      +login_user(username_or_email, password) : dict
+      +refresh_access_token(refresh_token) : dict
+      +delete_user(email) : dict
+    }
+    
+    class BaseArticleRepository {
+      <<abstract>>
+      +create_article(article_data) : string
+      +get_all_articles(skip, limit) : list
+      +get_article_by_id(article_id) : dict
+      +update_article(article_id, update_data) : bool
+      +delete_article(article_id) : bool
+    }
+    
+    class MongoArticleRepository {
+      +create_article(article_data) : string
+      +get_all_articles(skip, limit) : list
+      +get_article_by_id(article_id) : dict
+      +update_article(article_id, update_data) : bool
+      +delete_article(article_id) : bool
+    }
+    
+    class BaseUserRepository {
+      <<abstract>>
+      +find_by_email(email) : dict
+      +find_by_username(username) : dict
+      +create_user(user_data) : string
+      +update_user_role(email, new_role) : bool
+      +delete_user(email) : bool
+      +store_refresh_token(username, hashed_refresh) : bool
+      +get_refresh_token(username) : string
+    }
+    
+    class MongoUserRepository {
+      +find_by_email(email) : dict
+      +find_by_username(username) : dict
+      +create_user(user_data) : string
+      +update_user_role(email, new_role) : bool
+      +delete_user(email) : bool
+      +store_refresh_token(username, hashed_refresh) : bool
+      +get_refresh_token(username) : string
+    }
+    
+    class Logger {
+      +get_logger(name, level) : Logger
+    }
+    
+    Application --> Config
+    ArticleService --> MongoArticleRepository : uses
+    UserService --> MongoUserRepository : uses
+    MongoArticleRepository ..|> BaseArticleRepository
+    MongoUserRepository ..|> BaseUserRepository
+    ArticleService --> Logger : logs
+    UserService --> Logger : logs

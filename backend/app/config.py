@@ -13,12 +13,13 @@ class Config:
 
     # Determine if we're in testing mode.
     TESTING = os.getenv("TESTING", "false").lower() == "true"
+    print(f"TESTING: {TESTING}")
 
     if TESTING:
         MONGO_URI = os.getenv("TEST_MONGO_URI", "mongodb://localhost:27017/")
         MONGO_DB_NAME = os.getenv("TEST_MONGO_DB_NAME", "hive_db_test")
     else:
-        MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+        MONGO_URI = os.getenv("MONGO_URI", "mongodb://atlas:27017/")
         MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "hive_db")
 
     # Secret Keys
@@ -38,13 +39,8 @@ class Config:
 
     # JWT configuration
     JWT_ALGORITHM = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(
-        # minutes=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "1"))
-        seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "4"))
-    )
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(
-        seconds=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", "12"))
-    )
+    JWT_ACCESS_TOKEN_EXPIRES = 4
+    JWT_REFRESH_TOKEN_EXPIRES = 12
     JWT_TOKEN_LOCATION = ["cookies"]
 
     # Secure cookie settings: use production settings if FLASK_ENV is production

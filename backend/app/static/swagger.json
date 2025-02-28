@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Hive API",
-    "description": "API documentation for the Hive news platform",
+    "description": "API documentation for the Hive news platform backend.",
     "version": "1.0.0"
   },
   "host": "localhost:5000",
@@ -18,7 +18,7 @@
   "paths": {
     "/": {
       "get": {
-        "summary": "Home route",
+        "summary": "Home",
         "description": "Returns a welcome message.",
         "responses": {
           "200": {
@@ -38,8 +38,8 @@
     },
     "/api/register": {
       "post": {
-        "summary": "User registration",
-        "description": "Registers a new user with username, email, and password.",
+        "summary": "Register a new user",
+        "description": "Registers a new user. Required fields: username, email, password. Optionally, role may be set by an admin.",
         "parameters": [
           {
             "in": "body",
@@ -51,7 +51,8 @@
               "properties": {
                 "username": { "type": "string" },
                 "email": { "type": "string" },
-                "password": { "type": "string" }
+                "password": { "type": "string" },
+                "role": { "type": "string", "example": "regular" }
               },
               "required": ["username", "email", "password"]
             }
@@ -69,10 +70,7 @@
             }
           },
           "400": {
-            "description": "Missing required fields"
-          },
-          "500": {
-            "description": "Internal server error during registration"
+            "description": "Missing required fields or user already exists"
           }
         }
       }
@@ -80,7 +78,7 @@
     "/api/login": {
       "post": {
         "summary": "User login",
-        "description": "Authenticates a user and returns JWT access and refresh tokens.",
+        "description": "Authenticates a user using username or email and password. Returns JWT tokens in HTTP-only cookies (and in JSON response in testing mode).",
         "parameters": [
           {
             "in": "body",
@@ -90,10 +88,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": { "type": "string" },
+                "username_or_email": { "type": "string" },
                 "password": { "type": "string" }
               },
-              "required": ["email", "password"]
+              "required": ["username_or_email", "password"]
             }
           }
         ],
@@ -103,14 +101,31 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": { "type": "string" },
+                "message": { "type": "string", "example": "Login successful" },
                 "access_token": { "type": "string" },
                 "refresh_token": { "type": "string" }
               }
             }
           },
           "401": {
-            "description": "Invalid credentials or user not found"
+            "description": "User not found or invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "User logout",
+        "description": "Clears JWT cookies to log out the user.",
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string", "example": "Logged out successfully" }
+              }
+            }
           }
         }
       }
@@ -118,14 +133,14 @@
     "/api/refresh": {
       "post": {
         "summary": "Refresh JWT tokens",
-        "description": "Refreshes JWT access token using the refresh token (sent as a cookie).",
+        "description": "Refreshes the access token using the refresh token from the HTTP-only cookie.",
         "responses": {
           "200": {
             "description": "Tokens refreshed successfully",
             "schema": {
               "type": "object",
               "properties": {
-                "message": { "type": "string" },
+                "message": { "type": "string", "example": "Token refreshed successfully" },
                 "access_token": { "type": "string" },
                 "refresh_token": { "type": "string" }
               }
@@ -139,13 +154,13 @@
     },
     "/api/articles": {
       "get": {
-        "summary": "Get articles",
-        "description": "Retrieves a paginated list of articles.",
+        "summary": "List Articles",
+        "description": "Retrieves a paginated list of articles. Query parameters: page (default 1) and limit (default 2).",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number (default is 1)",
+            "description": "Page number (default 1)",
             "required": false,
             "type": "integer",
             "default": 1
@@ -153,10 +168,10 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "Number of articles per page (default is 10)",
+            "description": "Number of articles per page (default 2)",
             "required": false,
             "type": "integer",
-            "default": 10
+            "default": 2
           }
         ],
         "responses": {
@@ -171,20 +186,20 @@
                   "title": { "type": "string" },
                   "content": { "type": "string" },
                   "author": { "type": "string" },
-                  "created_at": { "type": "string", "format": "date-time" },
-                  "updated_at": { "type": "string", "format": "date-time" }
+                  "created_at": { "type": "string" },
+                  "updated_at": { "type": "string" }
                 }
               }
             }
           },
-          "500": {
-            "description": "Error retrieving articles"
+          "400": {
+            "description": "Invalid pagination parameters"
           }
         }
       },
       "post": {
-        "summary": "Create article",
-        "description": "Creates a new article. Requires JWT authentication.",
+        "summary": "Create Article",
+        "description": "Creates a new article. Only moderators and admins are authorized to create articles.",
         "parameters": [
           {
             "in": "body",
@@ -207,7 +222,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": { "type": "string" },
+                "message": { "type": "string", "example": "Article created successfully" },
                 "article_id": { "type": "string" }
               }
             }
@@ -215,16 +230,16 @@
           "400": {
             "description": "Missing title or content"
           },
-          "500": {
-            "description": "Error creating article"
+          "403": {
+            "description": "User not authorized to create articles"
           }
         }
       }
     },
     "/api/articles/{article_id}": {
       "get": {
-        "summary": "Get article by ID",
-        "description": "Retrieves an article by its ID.",
+        "summary": "Retrieve Article",
+        "description": "Retrieves the details of a specific article by its ID.",
         "parameters": [
           {
             "name": "article_id",
@@ -244,8 +259,8 @@
                 "title": { "type": "string" },
                 "content": { "type": "string" },
                 "author": { "type": "string" },
-                "created_at": { "type": "string", "format": "date-time" },
-                "updated_at": { "type": "string", "format": "date-time" }
+                "created_at": { "type": "string" },
+                "updated_at": { "type": "string" }
               }
             }
           },
@@ -255,8 +270,8 @@
         }
       },
       "put": {
-        "summary": "Update article",
-        "description": "Updates an existing article. Requires JWT authentication.",
+        "summary": "Update Article",
+        "description": "Updates an existing article. Requires at least one field (title or content) to update.",
         "parameters": [
           {
             "name": "article_id",
@@ -268,7 +283,7 @@
           {
             "in": "body",
             "name": "body",
-            "description": "Article fields to update",
+            "description": "Fields to update",
             "required": true,
             "schema": {
               "type": "object",
@@ -285,21 +300,21 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": { "type": "string" }
+                "message": { "type": "string", "example": "Article updated successfully" }
               }
             }
           },
           "400": {
-            "description": "No data provided for update"
+            "description": "No update data provided"
           },
           "404": {
-            "description": "Article not found or update failed"
+            "description": "Article not found"
           }
         }
       },
       "delete": {
-        "summary": "Delete article",
-        "description": "Deletes an article. Requires JWT authentication.",
+        "summary": "Delete Article",
+        "description": "Deletes an article. Only authorized users (author, moderator, or admin) can delete an article.",
         "parameters": [
           {
             "name": "article_id",
@@ -315,50 +330,52 @@
             "schema": {
               "type": "object",
               "properties": {
-                "message": { "type": "string" }
+                "message": { "type": "string", "example": "Article deleted successfully" }
               }
             }
           },
           "404": {
-            "description": "Article not found or deletion failed"
+            "description": "Article not found"
+          },
+          "403": {
+            "description": "User not authorized to delete this article"
           }
         }
       }
     },
-    "/api/logout": {
-      "post": {
-        "summary": "User logout",
-        "description": "Logs out the user by deleting JWT cookies.",
-        "responses": {
-          "200": {
-            "description": "Logout successful",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": { "type": "string", "example": "Logged out successfully" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/protected": {
+    "/api/articles/search": {
       "get": {
-        "summary": "Protected route",
-        "description": "Returns user identity and JWT claims. Requires JWT authentication.",
+        "summary": "Search Articles",
+        "description": "Searches for articles based on a query parameter.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Search keyword",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "User details",
+            "description": "Search results",
             "schema": {
-              "type": "object",
-              "properties": {
-                "username": { "type": "string" },
-                "role": { "type": "string" }
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "article_id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "author": { "type": "string" },
+                  "created_at": { "type": "string" },
+                  "updated_at": { "type": "string" }
+                }
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
+          "400": {
+            "description": "Missing search query parameter"
           }
         }
       }

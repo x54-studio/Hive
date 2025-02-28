@@ -45,12 +45,12 @@ class MongoUserRepository:
             logger.error("Error updating user role", extra={"email": email, "new_role": new_role, "error": str(e)})
             raise e
 
-    def delete_user(self, email):
+    def delete_user(self, username):
         try:
-            result = self.users.delete_one({"email": email})
+            result = self.users.delete_one({"username": username})
             return result.deleted_count > 0
         except errors.PyMongoError as e:
-            logger.error("Error deleting user", extra={"email": email, "error": str(e)})
+            logger.error("Error deleting user", extra={"username": username, "error": str(e)})
             raise e
 
     def store_refresh_token(self, username, hashed_refresh):

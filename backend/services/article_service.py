@@ -34,9 +34,9 @@ class ArticleService:
             )
             return {"error": "Error creating article"}
 
-    def get_all_articles(self, page=1, limit=10):
-        skip = (page - 1) * limit
+    def get_all_articles(self, page=1, limit=2):
         try:
+            skip = (page - 1) * limit
             articles = self.repo.get_all_articles(skip=skip, limit=limit)
             logger.info(
                 "Fetched articles",
@@ -69,24 +69,14 @@ class ArticleService:
         if content:
             update_data["content"] = content
         if not update_data:
-            logger.warning(
-                "No update fields provided for article",
-                extra={"article_id": article_id},
-            )
-            return {"error": "No update fields provided"}
+            return {"error": "No data provided for update"}
         update_data["updated_at"] = datetime.now(timezone.utc)
         try:
             success = self.repo.update_article(article_id, update_data)
             if success:
-                logger.info("Article updated", extra={"article_id": article_id})
                 return {"message": "Article updated successfully"}
-            logger.warning("Article update failed", extra={"article_id": article_id})
             return {"error": "Article not found or update failed"}
         except RepositoryError as e:
-            logger.error(
-                "Error updating article",
-                extra={"error": str(e), "article_id": article_id},
-            )
             return {"error": "Error updating article"}
 
     def delete_article(self, article_id):
@@ -103,3 +93,18 @@ class ArticleService:
                 extra={"error": str(e), "article_id": article_id},
             )
             return {"error": "Error deleting article"}
+
+    def search_articles(self, query):
+        """
+        Search for articles that match the query in the title or content.
+        For now, we'll implement a simple search returning all articles that contain the query.
+        """
+        try:
+            # Call a repository method to perform the search.
+            # This assumes you implement search_articles in your repository.
+            results = self.repo.search_articles(query)
+            logger.info("Search returned %d articles", len(results))
+            return results
+        except Exception as e:
+            logger.error("Error searching articles", extra={"error": str(e)})
+            return {"error": "Error searching articles"}

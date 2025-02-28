@@ -7,7 +7,7 @@ class BaseArticleRepository(ABC):
         """Create a new article document with the provided data."""
 
     @abstractmethod
-    def get_all_articles(self, skip=0, limit=10):
+    def get_all_articles(self, skip=0, limit=2):
         """Retrieve a list of article documents with pagination."""
 
     @abstractmethod
@@ -21,3 +21,7 @@ class BaseArticleRepository(ABC):
     @abstractmethod
     def delete_article(self, article_id):
         """Delete the article document identified by article_id."""
+
+    @abstractmethod
+    def search_articles(self, query):
+        """Retrieve a list of article documents by query."""

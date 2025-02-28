@@ -26,21 +26,17 @@ class MongoArticleRepository(BaseArticleRepository):
             )
             raise RepositoryError(f"Error creating article: {str(e)}") from e
 
-    def get_all_articles(self, skip=0, limit=10):
+    def get_all_articles(self, skip=0, limit=2):
         try:
-            cursor = (
-                self.articles.find({}).sort("created_at", -1).skip(skip).limit(limit)
-            )
+            cursor = self.articles.find({}).sort("_id", 1).skip(skip).limit(limit)
             articles = []
             for article in cursor:
-                article["_id"] = str(article["_id"])
+                # Rename _id to article_id to match our API specification
+                article["article_id"] = str(article.pop("_id"))
                 articles.append(article)
             return articles
         except errors.PyMongoError as e:
-            logger.error(
-                "Error retrieving articles",
-                extra={"skip": skip, "limit": limit, "error": str(e)},
-            )
+            logger.error("Error retrieving articles", extra={"skip": skip, "limit": limit, "error": str(e)})
             raise RepositoryError(f"Error retrieving articles: {str(e)}") from e
 
     def get_article_by_id(self, article_id):
@@ -92,3 +88,18 @@ class MongoArticleRepository(BaseArticleRepository):
                 extra={"article_id": article_id, "error": str(e)},
             )
             raise RepositoryError(f"Error deleting article: {str(e)}") from e
+
+    def search_articles(self, query):
+        """
+        For now, perform a simple case-insensitive search in the title field.
+        """
+        try:
+            cursor = self.articles.find({"title": {"$regex": query, "$options": "i"}})
+            articles = []
+            for article in cursor:
+                article["article_id"] = str(article.pop("_id"))
+                articles.append(article)
+            return articles
+        except Exception as e:
+            logger.error("Error in search_articles", extra={"error": str(e)})
+            raise e

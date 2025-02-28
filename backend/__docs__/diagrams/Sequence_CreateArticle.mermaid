@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant C as Client
+    participant R as API Route (/api/articles POST)
+    participant S as ArticleService
+    participant Repo as ArticleRepository
+    participant DB as Database
+
+    C->>R: POST /api/articles<br>{title, content}
+    R->>S: create_article(title, content, current_user)
+    S->>Repo: create_article(article_data)
+    Repo->>DB: Insert article document
+    DB-->>Repo: Return inserted_id
+    Repo-->>S: Return article_id
+    S-->>R: {"message": "Article created successfully",<br>"article_id": article_id}
+    R-->>C: 201 Created<br>JSON response
