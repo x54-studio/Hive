@@ -1,10 +1,9 @@
 // src/pages/Register.js
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { register } from '../redux/slices/authSlice'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { toast } from 'react-toastify'
 
 const Register = () => {
   const dispatch = useDispatch()
@@ -42,7 +41,6 @@ const Register = () => {
 
   return (
     <div className="flex flex-col items-center justify-center pt-40">
-      <ToastContainer position="bottom-right" autoClose={10000} />
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
         <h2 className="text-3xl font-bold text-center mb-6">Register</h2>
         <form onSubmit={handleSubmit} autoComplete="off">
@@ -111,12 +109,6 @@ const Register = () => {
             Register
           </button>
         </form>
-        <div className="mt-4 text-center">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Login
-          </Link>
-        </div>
       </div>
     </div>
   )
