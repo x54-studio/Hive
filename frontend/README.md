@@ -17,3 +17,18 @@ We've transitioned from the legacy AuthContext to a centralized authentication f
   - Simplified component logic as authentication state is now managed globally.
 
 For further details, refer to the unit tests in `src/__tests__/authSlice.test.js` which demonstrate the expected behavior of our new auth slice.
+
+
+## Technology Stack
+
+The frontend stack for Hive includes the following key technologies:
+
+- **React:** Used for building the component-based UI.
+- **React Router:** Manages client-side navigation and routing.
+- **Redux Toolkit & Redux:** Manages global state, especially for user sessions and complex UI logic.
+- **React Query:** Handles asynchronous data fetching and caching for server state.
+- **Tailwind CSS:** Provides utility-first styling for a responsive design.
+- **Jest & React Testing Library:** Used for unit and integration testing.
+- **Cypress:** Provides end-to-end testing capabilities.
+- **Axios:** For making HTTP requests to the backend API.
+- **Babel & Webpack (or Create React App):** For transpiling and bundling the code.

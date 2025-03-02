@@ -1,44 +1,28 @@
 // src/App.js
-import React, { useEffect, Suspense } from "react";
-import { useDispatch } from "react-redux";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
-import Navbar from "./components/Navbar";
-import { refreshTokens } from "./redux/authSlice"; // a new thunk for session check
-import useTokenRefresh from "./hooks/useTokenRefresh";
+import React from 'react'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import Login from './pages/Login'
+import Register from './pages/Register'
 
-const Home = React.lazy(() => import("./pages/Home"));
-const Login = React.lazy(() => import("./pages/Login"));
-const Register = React.lazy(() => import("./pages/Register"));
-const Profile = React.lazy(() => import("./pages/Profile"));
-
-function App() {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    // Instead of calling GET /api/protected directly,
-    // dispatch a thunk that handles session check/refresh.
-    dispatch(refreshTokens());
-  }, [dispatch]);
-
-  // Start auto refresh mechanism.
-  useTokenRefresh();
-
+const App = () => {
   return (
     <Router>
-      <Layout>
-        <Navbar />
-        <Suspense fallback={<div className="text-center p-4">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
-          </Routes>
-        </Suspense>
-      </Layout>
+      <nav className="p-4 bg-gray-200">
+        <ul className="flex space-x-4">
+          <li>
+            <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
+          </li>
+          <li>
+            <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
+          </li>
+        </ul>
+      </nav>
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App

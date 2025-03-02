@@ -1,15 +1,12 @@
 module.exports = {
+  testEnvironment: 'jsdom',
+  setupFiles: ['<rootDir>/jest.env.js'], // Load environment variables first
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   transform: {
-    "^.+\\.[jt]sx?$": "babel-jest"
+    '^.+\\.[tj]sx?$': 'babel-jest'
   },
-  transformIgnorePatterns: [
-    "/node_modules/(?!react-router-dom|axios)"
-  ],
-  setupFilesAfterEnv: ["<rootDir>/src/setupTests.js"],
-  testEnvironment: "jsdom",
+  transformIgnorePatterns: ['/node_modules/'],
   moduleNameMapper: {
-    "\\.(css|less|scss|sass)$": "identity-obj-proxy"
-  },
-  //moduleDirectories: ["node_modules", "src"],
-  //extensionsToTreatAsEsm: [".jsx", ".ts", ".tsx"]
-};
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
+  }
+}

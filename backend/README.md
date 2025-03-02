@@ -173,4 +173,19 @@ Update your CI/CD pipeline to run tests from the `__tests__` directory and set e
 
 [Specify your license here]
 
+## Technology Stack
+
+The backend stack for Hive includes:
+
+- **Python 3.8+ / 3.11:** The programming language used.
+- **Flask:** The web framework that powers the RESTful API.
+- **Flask-CORS:** To handle cross-origin resource sharing.
+- **Flask-JWT-Extended & PyJWT:** For JWT-based authentication.
+- **Flask-Swagger-UI:** For interactive API documentation.
+- **PyMongo:** For interacting with MongoDB.
+- **python-dotenv:** For managing environment variables.
+- **bcrypt:** For secure password hashing.
+- **Docker:** For containerizing and deploying the application.
+- **Linting & Testing:** Using tools like Flake8, Pylint, and pytest for code quality and testing.
+
 ---
