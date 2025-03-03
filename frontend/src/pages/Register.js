@@ -4,11 +4,11 @@ import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { register } from '../redux/slices/authSlice'
 import { toast } from 'react-toastify'
+import AsyncButton from '../components/AsyncButton'
 
 const Register = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -20,7 +20,8 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
+  // onClick handler for the AsyncButton
+  const handleClick = async (e) => {
     e.preventDefault()
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match')
@@ -43,7 +44,7 @@ const Register = () => {
     <div className="flex flex-col items-center justify-center pt-40">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
         <h2 className="text-3xl font-bold text-center mb-6">Register</h2>
-        <form onSubmit={handleSubmit} autoComplete="off">
+        <form autoComplete="off">
           <div className="mb-4">
             <label htmlFor="username" className="block text-gray-700 mb-1">
               Username
@@ -102,12 +103,13 @@ const Register = () => {
               autoComplete="new-password"
             />
           </div>
-          <button
+          <AsyncButton
             type="submit"
+            initialLabel="Register"
+            loadingLabel="Registering..."
+            onClick={handleClick}
             className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition-colors"
-          >
-            Register
-          </button>
+          />
         </form>
       </div>
     </div>

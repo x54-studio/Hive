@@ -1,0 +1,23 @@
+flowchart TD
+    A[User navigates to /login]
+    B[Login Page is rendered]
+    C[User enters credentials:<br>Username/Email & Password]
+    D[User clicks 'Login']
+    E[Dispatch login action]
+    F{Backend validates credentials?}
+    G[Success: Backend returns user profile<br>and sets HTTP-only cookies]
+    H[Failure: Backend returns error message]
+    I[Update global state with user data]
+    J["Navigate to protected area (/profile)"]
+    K[Display error message on login page]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F -- Yes --> G
+    F -- No --> H
+    G --> I
+    I --> J
+    H --> K

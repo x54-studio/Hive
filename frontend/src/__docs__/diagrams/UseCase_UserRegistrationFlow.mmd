@@ -22,21 +22,3 @@ flowchart TD
     G -- Failure --> I
     H --> J
     I --> K
-
-sequenceDiagram
-    participant U as User
-    participant FE as Frontend
-    participant BE as Backend
-
-    U->>FE: Navigate to /register
-    FE->>U: Render registration form
-    U->>FE: Enter registration details (Username, Email, Password, Confirm Password)
-    FE->>FE: Perform client-side validation (show/hide password, disable auto-fill)
-    U->>FE: Click Register button
-    FE->>BE: Send POST /api/register with form data
-    BE-->>FE: Return success response or error details
-    alt Registration Success
-      FE->>U: Display "User registered successfully!" and show link to login page
-    else Registration Failure
-      FE->>U: Display error message (e.g., missing fields, duplicate account)
-    end

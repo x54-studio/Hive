@@ -1,3 +1,4 @@
+// cypress/e2e/Register.cy.js
 describe('User Registration E2E with Toast Notification', () => {
   beforeEach(() => {
     // Ensure your frontend server is running at the correct URL.

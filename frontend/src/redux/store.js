@@ -1,10 +1,15 @@
 // src/redux/store.js
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
+import { configureStore } from '@reduxjs/toolkit'
+import authReducer from './slices/authSlice'
 
-export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    // Add additional reducers here as needed
-  },
-});
+export function createAppStore(preloadedState) {
+  return configureStore({
+    reducer: {
+      auth: authReducer,
+    },
+    preloadedState,
+  })
+}
+
+// Export a default singleton store for production
+export const store = createAppStore()

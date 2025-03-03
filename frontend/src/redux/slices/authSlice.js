@@ -47,6 +47,19 @@ export const logout = createAsyncThunk(
   }
 )
 
+// New: refreshUser thunk to re-fetch the user session
+export const refreshUser = createAsyncThunk(
+  'auth/refreshUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('/protected', { withCredentials: true })
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Refresh user failed')
+    }
+  }
+)
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: { user: null, loading: false, error: null },
@@ -91,6 +104,20 @@ const authSlice = createSlice({
       .addCase(logout.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+        state.user = null
+      })
+      // Handle refreshUser lifecycle
+      .addCase(refreshUser.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(refreshUser.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = action.payload
+      })
+      .addCase(refreshUser.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.user = null
       })
   }
 })

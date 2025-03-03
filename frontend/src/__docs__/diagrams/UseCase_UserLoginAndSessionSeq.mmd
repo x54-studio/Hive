@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant U as User
+    participant UI as Login UI
+    participant RT as Redux Thunk
+    participant BE as Backend API
+    participant NAV as Navigation
+
+    U->>UI: Navigate to /login
+    UI->>U: Render login form
+    U->>UI: Enter "Username or Email" and "Password"
+    U->>UI: Click "Login"
+    UI->>RT: Dispatch login action
+    RT->>BE: POST /api/login with credentials
+    alt Successful Authentication
+      BE-->>RT: Return user profile and set cookies
+      RT->>UI: Update global state with user data
+      UI->>NAV: Call navigate('/profile')
+      Note over UI,NAV: User is logged in and session is maintained
+    else Failed Authentication
+      BE-->>RT: Return error message
+      RT->>UI: Return error payload
+      UI->>U: Display error message ("Invalid username or password")
+    end
