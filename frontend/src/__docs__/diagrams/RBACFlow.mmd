@@ -1,0 +1,23 @@
+flowchart TD
+    A[Guest]
+    B[Regular User]
+    C[Editor]
+    D[Admin]
+    E[Public Content]
+    F[Login]
+    G[Profile & General Content]
+    H[Article Management]
+    I[User Management & Settings]
+    J[Restricted Page Access]
+
+    A --> E
+    A -- "Attempts restricted action" --> F
+    F --> B
+    B --> G
+    B -- "Attempts restricted action" --> J
+    J -- "Access Denied" --> F
+
+    C --> G
+    C --> H
+    D --> G
+    D --> I
