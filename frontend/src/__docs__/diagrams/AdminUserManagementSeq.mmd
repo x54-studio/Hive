@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant A as Admin
+    participant UI as User Management UI
+    participant FE as Frontend
+    participant BE as Backend API
+    participant DB as Database
+
+    A->>UI: Navigate to "User Management"
+    UI->>FE: Request user list (page X, size Y)
+    FE->>BE: GET /api/users?page=X&size=Y
+    BE->>DB: Query user data with pagination
+    DB-->>BE: Return paginated user list and metadata
+    BE-->>FE: Return paginated user list and metadata
+    FE->>UI: Render user table (at least 10 rows, with empty rows if needed) and pagination controls

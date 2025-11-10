@@ -39,10 +39,22 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await axiosInstance.post('/logout', {}, { withCredentials: true })
+      await axiosInstance.post('/logout', {}, { withCredentials: true });
+      return;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Logout failed');
+    }
+  }
+)
+
+export const refresh = createAsyncThunk(
+  'auth/refresh',
+  async (_, { rejectWithValue }) => {
+    try {
+      await axiosInstance.post('/refresh', {}, { withCredentials: true })
       return
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Logout failed')
+      return rejectWithValue(error.response?.data || 'Refresh failed')
     }
   }
 )
@@ -106,7 +118,13 @@ const authSlice = createSlice({
         state.error = action.payload
         state.user = null
       })
-      // Handle refreshUser lifecycle
+      .addCase(refresh.fulfilled, (state) => {
+        state.error = null
+      })
+      .addCase(refresh.rejected, (state, action) => {
+        state.user = null
+        state.error = action.payload
+      })
       .addCase(refreshUser.pending, (state) => {
         state.loading = true
       })

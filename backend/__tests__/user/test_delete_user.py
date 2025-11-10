@@ -1,14 +1,4 @@
-"""
-References: backend/__docs__/useCases/user/UseCase_DeleteUser.md
-
-Test Scenarios:
-1. Successful deletion of an existing user.
-   - Expect DELETE /api/users/<email> to return status 200 with
-     {"message": "User deleted successfully"}.
-   - A subsequent login attempt for the deleted user should fail.
-2. Attempting to delete a non-existent user returns a 404 with an appropriate error.
-"""
-
+# backend/__tests__/user/test_delete_user.py
 import unittest
 import json
 from app import create_app
@@ -27,57 +17,66 @@ class TestDeleteUser(unittest.TestCase):
         cls.test_db = cls.mongo_client[Config.MONGO_DB_NAME]
         cls.test_db.users.delete_many({})  # Clean any pre-existing users
 
-        # Register a test user that we will delete
-        cls.client.post(
-            "/api/register",
-            json={
-                "username": "deleteuser",
-                "email": "deleteuser@example.com",
-                "password": "password123"
-            }
-        )
-        # Log in to get authentication cookie
-        cls.login_resp = cls.client.post(
-            "/api/login",
-            json={"username_or_email": "deleteuser", "password": "password123"}
-        )
+        # Register an admin user.
+        admin_data = {
+            "username": "adminuser",
+            "email": "admin@example.com",
+            "password": "adminpass"
+        }
+        cls.client.post("/api/register", json=admin_data)
+        # Force the role to "admin" in the database.
+        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
         
-        # Extract cookies from login response (assuming tokens are set in cookies)
-        cls.cookies = {}
-        for header in cls.login_resp.headers.get_all("Set-Cookie"):
-            cookie_pair = header.split(";")[0]
-            key, value = cookie_pair.split("=")
-            cls.cookies[key] = value
+        # Re-login as admin to ensure token contains updated role.
+        login_resp = cls.client.post(
+            "/api/login",
+            json={"username_or_email": "admin@example.com", "password": "adminpass"}
+        )
+        if login_resp.status_code != 200:
+            raise Exception(f"Admin login failed with status {login_resp.status_code}")
+        login_data = login_resp.get_json()
+        cls.admin_token = login_data["access_token"]
+        cls.admin_headers = {"Cookie": f"access_token={cls.admin_token}"}
+
+        # Register a test user that we will delete.
+        user_data = {
+            "username": "deleteuser",
+            "email": "deleteuser@example.com",
+            "password": "password123"
+        }
+        create_resp = cls.client.post("/api/users", json=user_data, headers=cls.admin_headers)
+        if create_resp.status_code != 201:
+            raise Exception("User creation failed for deletion test")
+        # Retrieve the user's _id from the database.
+        user_doc = cls.test_db.users.find_one({"username": "deleteuser"})
+        cls.user_id = str(user_doc["_id"]) if user_doc else None
 
     def test_delete_user_success(self):
-        # Issue DELETE request using the username (not email)
+        # Delete the existing user using admin credentials.
         resp = self.client.delete(
-            "/api/users/deleteuser",
-            headers={"Cookie": f"access_token={self.cookies.get('access_token')}"}
+            f"/api/users/{self.user_id}",
+            headers=self.admin_headers
         )
         self.assertEqual(resp.status_code, 200, "Expected 200 status on successful deletion")
         data = resp.get_json()
         self.assertIn("message", data)
         self.assertEqual(data["message"], "User deleted successfully")
     
-        # Optionally, attempt to log in again and verify that it fails.
-        login_again_resp = self.client.post(
-            "/api/login",
-            json={"username_or_email": "deleteuser", "password": "password123"}
-        )
-        self.assertNotEqual(login_again_resp.status_code, 200, "Deleted user should not be able to log in")
+        # Verify that the user no longer exists in the database.
+        user_in_db = self.test_db.users.find_one({"username": "deleteuser"})
+        self.assertIsNone(user_in_db, "User should no longer exist in the database")
 
     def test_delete_user_not_found(self):
-        # Attempt to delete a user that doesn't exist.
+        # Attempt to delete a user with a valid ObjectId that does not exist.
+        # Use a well-formed ObjectId string that is not in the database.
         resp = self.client.delete(
-            "/api/users/nonexistent@example.com",
-            headers={"Cookie": f"access_token={self.cookies.get('access_token')}"}
+            "/api/users/000000000000000000000000",
+            headers=self.admin_headers
         )
         self.assertEqual(resp.status_code, 404, "Expected 404 status for non-existent user deletion")
         data = resp.get_json()
         self.assertIn("error", data)
         self.assertIn("not found", data["error"].lower())
-
 
     @classmethod
     def tearDownClass(cls):

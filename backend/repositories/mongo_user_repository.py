@@ -1,8 +1,7 @@
-# repositories/mongo_user_repository.py
+# backend/repositories/mongo_user_repository.py
 from utilities.logger import get_logger
 from pymongo import errors
 from bson import ObjectId
-from bson.errors import InvalidId
 from .db import get_db  # Use the getter function instead of importing db directly
 
 logger = get_logger(__name__)
@@ -26,6 +25,13 @@ class MongoUserRepository:
             logger.error("Error finding user by username", extra={"username": username, "error": str(e)})
             raise e
 
+    def find_by_id(self, user_id):
+        try:
+            return self.users.find_one({"_id": ObjectId(user_id)})
+        except errors.PyMongoError as e:
+            logger.error("Error finding user by id", extra={"user_id": user_id, "error": str(e)})
+            raise e
+
     def create_user(self, user_data):
         try:
             result = self.users.insert_one(user_data)
@@ -34,23 +40,23 @@ class MongoUserRepository:
             logger.error("Error creating user", extra={"user_data": user_data, "error": str(e)})
             raise e
 
-    def update_user_role(self, email, new_role):
+    def update_user(self, user_id, update_data):
         try:
             result = self.users.update_one(
-                {"email": email},
-                {"$set": {"role": new_role}}
+                {"_id": ObjectId(user_id)},
+                {"$set": update_data}
             )
             return result.modified_count > 0
         except errors.PyMongoError as e:
-            logger.error("Error updating user role", extra={"email": email, "new_role": new_role, "error": str(e)})
+            logger.error("Error updating user", extra={"user_id": user_id, "update_data": update_data, "error": str(e)})
             raise e
 
-    def delete_user(self, username):
+    def delete_user(self, user_id):
         try:
-            result = self.users.delete_one({"username": username})
+            result = self.users.delete_one({"_id": ObjectId(user_id)})
             return result.deleted_count > 0
         except errors.PyMongoError as e:
-            logger.error("Error deleting user", extra={"username": username, "error": str(e)})
+            logger.error("Error deleting user", extra={"user_id": user_id, "error": str(e)})
             raise e
 
     def store_refresh_token(self, username, hashed_refresh):

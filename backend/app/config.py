@@ -39,8 +39,8 @@ class Config:
 
     # JWT configuration
     JWT_ALGORITHM = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRES = 4
-    JWT_REFRESH_TOKEN_EXPIRES = 12
+    JWT_ACCESS_TOKEN_EXPIRES = 5
+    JWT_REFRESH_TOKEN_EXPIRES = 15
     JWT_TOKEN_LOCATION = ["cookies"]
 
     # Secure cookie settings: use production settings if FLASK_ENV is production

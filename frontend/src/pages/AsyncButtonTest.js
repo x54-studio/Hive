@@ -14,6 +14,7 @@ const AsyncButtonTest = () => {
     <div>
       <h2>Async Button Test</h2>
       <AsyncButton
+        data-cy="async-button"
         initialLabel="Submit"
         loadingLabel="Processing..."
         onClick={asyncOperation}

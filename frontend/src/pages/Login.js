@@ -24,7 +24,7 @@ const Login = () => {
     try {
       const resultAction = await dispatch(login(formData))
       if (login.fulfilled.match(resultAction)) {
-        toast.success('Login successful')
+        toast.success('Operation successful', { autoClose: 1500 });
         navigate('/profile')
       } else {
         toast.error(resultAction.payload.error || 'Login failed')

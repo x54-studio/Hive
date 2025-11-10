@@ -7,7 +7,7 @@
   1. User or admin is authenticated.
   2. If a self-delete flow, the user must confirm or pass additional validation (like re-entering password).
 - **Main Flow**:
-  1. Actor sends `DELETE /api/users/<user_id>`.
+  1. Actor sends `DELETE /api/users/:id`.
   2. System verifies user has permission (admin can delete any user, or user can delete themselves).
   3. System deletes user doc from DB.
   4. Returns `{"message": "User deleted successfully"}`.

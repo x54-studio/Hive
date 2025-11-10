@@ -13,12 +13,15 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await dispatch(logout()).unwrap()
-      toast.success('Logged out successfully.')
+      toast.success('Logged out successfully.', { autoClose: 1500 });
       navigate('/login')
     } catch (error) {
       toast.error('Error logging out.')
     }
   }
+
+  // Check for role in both the top-level and in the claims object.
+  const role = user?.claims?.role || user?.role
 
   return (
     <nav className="p-4 bg-gray-200">
@@ -30,6 +33,13 @@ const Navbar = () => {
                 Profile
               </Link>
             </li>
+            {role === 'admin' && (
+              <li>
+                <Link to="/admin/users" className="text-blue-600 hover:underline">
+                  Admin User Management
+                </Link>
+              </li>
+            )}
             <li>
               <button onClick={handleLogout} className="text-blue-600 hover:underline">
                 Logout

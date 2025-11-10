@@ -16,7 +16,7 @@ const AsyncButton = ({ onClick, initialLabel, loadingLabel, ...props }) => {
 
   return (
     <button onClick={handleClick} disabled={isLoading} {...props}>
-      {isLoading ? (loadingLabel || 'Loading...') : initialLabel}
+      {isLoading ? loadingLabel || 'Loading...' : initialLabel}
     </button>
   )
 }
