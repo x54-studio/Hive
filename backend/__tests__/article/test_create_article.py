@@ -35,6 +35,14 @@ class TestCreateArticle(unittest.TestCase):
         # Force role update to moderator
         cls.test_db.users.update_one({"username": "moduser"}, {"$set": {"role": "moderator"}})
 
+        # Register an admin user.
+        admin = {
+            "username": "adminuser",
+            "email": "admin@example.com",
+            "password": "password123"
+        }
+        cls.client.post("/api/register", json=admin)
+        cls.test_db.users.update_one({"username": "adminuser"}, {"$set": {"role": "admin"}})
         # Register a regular user.
         regular = {
             "username": "regularuser",
@@ -54,7 +62,22 @@ class TestCreateArticle(unittest.TestCase):
         self.assertIn("access_token", data)
         return data["access_token"]
 
-    def test_create_article_success(self):
+    def test_create_article_success_admin(self):
+        # Log in as admin.
+        access_token = self.get_access_token("adminuser", "password123")
+        article_data = {
+            "title": "Admin Article",
+            "content": "This is an article created by admin."
+        }
+        headers = {"Cookie": f"access_token={access_token}"}
+        resp = self.client.post("/api/articles", json=article_data, headers=headers)
+        self.assertEqual(resp.status_code, 201, "Expected 201 status on successful creation by admin")
+        data = resp.get_json()
+        self.assertIn("message", data)
+        self.assertEqual(data["message"], "Article created successfully")
+        self.assertIn("article_id", data)
+
+    def test_create_article_success_moderator(self):
         # Log in as moderator.
         access_token = self.get_access_token("moduser", "password123")
         article_data = {

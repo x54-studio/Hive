@@ -12,9 +12,9 @@ const RBACDemo = () => {
   switch (user.role) {
     case 'admin':
       return <div>Admin Dashboard</div>
-    case 'editor':
-      return <div>Editor Panel</div>
-    case 'user':
+    case 'moderator':
+      return <div>Moderator Panel</div>
+    case 'regular':
       return <div>User Profile</div>
     default:
       return <div>Unknown Role</div>

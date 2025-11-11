@@ -18,10 +18,9 @@ const useTokenRefresh = (tokenLifetime, refreshCallback, buffer = 1000, onError)
       refreshTimeout.current = null
     }
 
-    // If tokenLifetime is null or not a positive number, log a warning and do nothing.
+    // If tokenLifetime is null or not a positive number, do nothing (normal for unauthenticated users).
     if (tokenLifetime == null || tokenLifetime <= buffer) {
-      console.warn(`useTokenRefresh: tokenLifetime is invalid (${tokenLifetime}). No timer scheduled.`)
-      if (onError) onError(new Error(`Invalid token lifetime: ${tokenLifetime} (buffer: ${buffer})`))
+      // Don't log warnings or call onError for null - this is expected when user is not logged in
       return
     }
 

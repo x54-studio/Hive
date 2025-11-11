@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 100
+exclude = 
+    .git,
+    __pycache__,
+    build,
+    dist,
+    venv,
+    node_modules
+ignore = 
+    # You can add additional ignore rules here if needed

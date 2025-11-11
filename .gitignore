@@ -1,2 +1,50 @@
-.flake8
-.pylintrc
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js / React
+node_modules/
+npm-debug.log*
+yarn-error.log*
+frontend/build/
+frontend/dist/
+
+# Environment
+.env
+.env.local
+.env*.local
+backend/.env
+frontend/.env
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+.cursorrules
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
+
+# Logs
+*.log
+
+# Working documents
+PROJECT_KNOWLEDGE.md
+project_truth_audit.md
+fix_Hive.md
+
+# Scripts output
+TreeStructure.txt

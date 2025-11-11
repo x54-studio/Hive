@@ -1,3 +1,6 @@
+# Sequence Diagram: User Login
+
+```mermaid
 sequenceDiagram
     participant C as Client
     participant R as /api/login Route
@@ -29,3 +32,5 @@ sequenceDiagram
             R-->>C: 401 {"error": "Invalid credentials"}
         end
     end
+```
+

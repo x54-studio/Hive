@@ -1,15 +1,27 @@
 services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27027:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=hive_db
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=hivepass123
   backend:
     build: ./backend
     environment:
       - PYTHONUNBUFFERED=1
-      - MONGO_URI=mongodb+srv://TestUser:TestPassword@clusterm0.zrr90.mongodb.net/?retryWrites=true&w=majority&tls=true&appName=ClusterM0
-      # development / production
-      - FLASK_ENV=production
+      - MONGO_URI=mongodb://admin:hivepass123@mongodb:27017/
+      - MONGO_DB_NAME=hive_db
+      - FLASK_ENV=development
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
+    depends_on:
+      - mongodb
 
   frontend:
     build: ./frontend
@@ -19,3 +31,6 @@ services:
       - ./frontend:/app
     depends_on:
       - backend
+
+volumes:
+  mongodb_data:

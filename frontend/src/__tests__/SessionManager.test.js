@@ -12,12 +12,12 @@ jest.useFakeTimers()
 
 // Mock jwt-decode so that when called it returns an object with an exp claim.
 // Here, we simulate a token that will expire in 6000 ms (6 seconds) from now.
-import jwtDecode from 'jwt-decode'
-jest.mock('jwt-decode', () => {
-  return jest.fn(() => ({
+import { jwtDecode } from 'jwt-decode'
+jest.mock('jwt-decode', () => ({
+  jwtDecode: jest.fn(() => ({
     exp: Math.floor((Date.now() + 6000) / 1000) // exp in seconds
   }))
-})
+}))
 
 describe('SessionManager', () => {
   let store

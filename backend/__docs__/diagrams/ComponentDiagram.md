@@ -1,3 +1,6 @@
+# Component Diagram
+
+```mermaid
 graph TD
     A[Client] -->|HTTP Requests| B[Flask Application]
     B --> C[API Routes]
@@ -18,3 +21,5 @@ graph TD
         P[Coverage Report]
     end
     O --> B
+```
+

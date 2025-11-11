@@ -68,7 +68,6 @@ def refresh():
 def protected():
     identity = get_jwt_identity()
     jwt_claims = get_jwt()
-    print(jwt_claims)
     return jsonify({"username": identity, "claims": jwt_claims})
 
 # Admin User Management Endpoints

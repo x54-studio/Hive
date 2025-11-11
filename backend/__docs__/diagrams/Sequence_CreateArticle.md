@@ -1,3 +1,6 @@
+# Sequence Diagram: Create Article
+
+```mermaid
 sequenceDiagram
     participant C as Client
     participant R as API Route (/api/articles POST)
@@ -13,3 +16,5 @@ sequenceDiagram
     Repo-->>S: Return article_id
     S-->>R: {"message": "Article created successfully",<br>"article_id": article_id}
     R-->>C: 201 Created<br>JSON response
+```
+

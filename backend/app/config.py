@@ -22,25 +22,27 @@ class Config:
         MONGO_URI = os.getenv("MONGO_URI", "mongodb://atlas:27017/")
         MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "hive_db")
 
-    # Secret Keys
-    SECRET_KEY = os.getenv("SECRET_KEY", "dupiarz_i_klockow_kupiacz_@#%^(32)")
-    if SECRET_KEY == "your_secret_key":
+    # Secret Keys - REQUIRED: Must be set via environment variables
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
         raise ValueError(
-            "Please set a secure SECRET_KEY in your environment variables!"
+            "SECRET_KEY environment variable is required. "
+            "Set it in your .env file or environment variables."
         )
 
-    JWT_SECRET_KEY = os.getenv(
-        "JWT_SECRET_KEY", "jwt_dupiarz_i_klockow_kupiacz_^&*(56)"
-    )
-    if JWT_SECRET_KEY == "your_jwt_secret_key":
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    if not JWT_SECRET_KEY:
         raise ValueError(
-            "Please set a secure JWT_SECRET_KEY in your environment variables!"
+            "JWT_SECRET_KEY environment variable is required. "
+            "Set it in your .env file or environment variables."
         )
 
-    # JWT configuration
+    # JWT configuration - Production values
     JWT_ALGORITHM = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRES = 5
-    JWT_REFRESH_TOKEN_EXPIRES = 15
+    # Access token expires in 15 minutes (900 seconds)
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "900"))
+    # Refresh token expires in 7 days (604800 seconds)
+    JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", "604800"))
     JWT_TOKEN_LOCATION = ["cookies"]
 
     # Secure cookie settings: use production settings if FLASK_ENV is production

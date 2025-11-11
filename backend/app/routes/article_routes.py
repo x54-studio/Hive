@@ -50,6 +50,21 @@ def get_article(article_id):
 @article_routes.route("/api/articles/<article_id>", methods=["PUT"])
 @jwt_required()
 def update_article(article_id):
+    # Retrieve the JWT claims and identity
+    claims = get_jwt()
+    user_role = claims.get("role", "regular")
+    username = get_jwt_identity()
+    
+    # Get the article to check author
+    article = current_app.article_service.get_article_by_id(article_id)
+    if article is None:
+        return jsonify({"error": "Article not found"}), 404
+    
+    # Check authorization: admin/moderator can update any article, author can update their own
+    article_author = article.get("author")
+    if user_role not in ["admin", "moderator"] and username != article_author:
+        return jsonify({"error": "User not authorized to update this article"}), 403
+    
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided for update"}), 400
@@ -62,6 +77,21 @@ def update_article(article_id):
 @article_routes.route("/api/articles/<article_id>", methods=["DELETE"])
 @jwt_required()
 def delete_article(article_id):
+    # Retrieve the JWT claims and identity
+    claims = get_jwt()
+    user_role = claims.get("role", "regular")
+    username = get_jwt_identity()
+    
+    # Get the article to check author
+    article = current_app.article_service.get_article_by_id(article_id)
+    if article is None:
+        return jsonify({"error": "Article not found"}), 404
+    
+    # Check authorization: admin/moderator can delete any article, author can delete their own
+    article_author = article.get("author")
+    if user_role not in ["admin", "moderator"] and username != article_author:
+        return jsonify({"error": "User not authorized to delete this article"}), 403
+    
     result = current_app.article_service.delete_article(article_id)
     status_code = 200 if "message" in result else 404
     return jsonify(result), status_code

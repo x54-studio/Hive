@@ -17,40 +17,32 @@ Role-Based Access Control (RBAC) restricts system access to authorized users bas
   - Manage content and data that require elevated privileges.
 - **Use Cases:**
   1. **User Management:**  
-     - **Description:** Admins view all users, update user information, change roles, or deactivate accounts.
+     - **Description:** Admins view all users, update user information, change roles, or delete accounts.
      - **Flow:**  
-       - Navigate to "User Management."
+       - Navigate to "Admin User Management."
        - Display all registered users.
        - Select a user to edit and update role information.
-       - Validate and log the change.
-  2. **System Configuration:**  
-     - **Description:** Admins update system settings (e.g., application configurations, access policies).
+       - Validate and apply the change.
+  2. **Article Management:**  
+     - **Description:** Admins can create, update, and delete any article.
      - **Flow:**  
-       - Access "System Settings."
-       - Modify configuration parameters.
-       - Validate and apply changes.
+       - Navigate to "Articles" section.
+       - Create, edit, or delete articles as needed.
+       - The system validates and applies changes.
 
-#### Editor
-- **Scope:** Oversee content and articles management.
+#### Moderator
+- **Scope:** Content and articles management.
 - **Primary Responsibilities:**
-  - Create, update, or delete articles and multimedia content.
-  - Review and approve articles submitted by other contributors.
-  - Manage content categories and tags.
+  - Create, update, or delete articles.
+  - Manage article content.
 - **Use Cases:**
   1. **Article Management:**  
-     - **Description:** An Editor can create new articles, edit existing ones, and delete outdated content.
+     - **Description:** A Moderator can create new articles, edit existing ones, and delete articles.
      - **Flow:**  
        - Navigate to the "Articles" section.
        - Create a new article or select an existing one for editing.
-       - Submit changes for review.
+       - Submit changes.
        - The system validates the content and updates the article.
-  2. **Content Review & Approval:**  
-     - **Description:** An Editor reviews submitted articles and either approves them for publication or requests revisions.
-     - **Flow:**  
-       - Access the "Submissions" page.
-       - Review pending articles.
-       - Approve, reject, or request changes.
-       - The system logs the decision and updates article status.
 
 #### Regular User
 - **Scope:** Standard access to personal data and public resources.
@@ -60,17 +52,18 @@ Role-Based Access Control (RBAC) restricts system access to authorized users bas
   - Submit requests or reports relevant to their role.
 - **Use Cases:**
   1. **Profile Management:**  
-     - **Description:** Users update their profile, change passwords, or modify contact information.
+     - **Description:** Users view their profile information (username, email, role).
      - **Flow:**  
        - Navigate to "Profile."
-       - Update personal details and save changes.
-       - Validate and confirm updates.
+       - View personal details.
+       - Note: Profile editing is not yet implemented (requires backend endpoints).
   2. **Content Interaction:**  
-     - **Description:** Users interact with public content—reading articles, posting comments, or providing feedback.
+     - **Description:** Users can view public articles and search for articles.
      - **Flow:**  
-       - Browse public articles.
-       - Interact with content (e.g., like, comment).
-       - The system records these interactions.
+       - Browse articles from the "Articles" page.
+       - Search for articles using the search functionality.
+       - View article details.
+       - Note: Regular users cannot create, edit, or delete articles.
 
 #### Guest
 - **Scope:** Limited access for users who are not logged in.
@@ -117,11 +110,11 @@ Role-Based Access Control (RBAC) restricts system access to authorized users bas
 A demo component (`RBACDemo`) has been implemented to visually verify role-based access control. It renders different UI based on the logged-in user's role:
 
 - **Admin:** Displays "Admin Dashboard"
-- **Editor:** Displays "Editor Panel"
+- **Moderator:** Displays "Moderator Panel"
 - **Regular User:** Displays "User Profile"
 - **No User:** Prompts "Please log in."
 - **Unrecognized Role:** Displays "Unknown Role"
 
 Automated tests for this component are located in the `src/__tests__/rbac` folder.
 
----
+**Note:** The actual implementation uses "moderator" role, not "editor". The roles are: admin, moderator, and regular (default).

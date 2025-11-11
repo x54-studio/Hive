@@ -20,6 +20,7 @@
     "start": "cross-env react-scripts start",
     "build": "react-scripts build",
     "test": "jest --bail",
+    "test:coverage": "jest --coverage",
     "eject": "react-scripts eject",
     "lint": "eslint .",
     "cypress:open": "cypress open",

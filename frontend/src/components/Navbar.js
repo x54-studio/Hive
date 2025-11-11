@@ -33,6 +33,23 @@ const Navbar = () => {
                 Profile
               </Link>
             </li>
+            <li>
+              <Link to="/articles" className="text-blue-600 hover:underline">
+                Articles
+              </Link>
+            </li>
+            <li>
+              <Link to="/search" className="text-blue-600 hover:underline">
+                Search
+              </Link>
+            </li>
+            {(role === 'admin' || role === 'moderator') && (
+              <li>
+                <Link to="/articles/create" className="text-blue-600 hover:underline">
+                  Create Article
+                </Link>
+              </li>
+            )}
             {role === 'admin' && (
               <li>
                 <Link to="/admin/users" className="text-blue-600 hover:underline">

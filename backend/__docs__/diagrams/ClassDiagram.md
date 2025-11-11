@@ -1,3 +1,6 @@
+# Class Diagram
+
+```mermaid
 classDiagram
     class Config {
       +SECRET_KEY : string
@@ -76,3 +79,5 @@ classDiagram
     MongoUserRepository ..|> BaseUserRepository
     ArticleService --> Logger : logs
     UserService --> Logger : logs
+```
+

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import jwtDecode from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import { refresh, logout } from '../redux/slices/authSlice'
 import useTokenRefresh from '../hooks/useTokenRefresh'
 
@@ -18,7 +18,7 @@ const SessionManager = () => {
     // Retrieve the access token from cookies.
     const accessToken = getCookie('access_token')
     if (!accessToken) {
-      console.warn("No access token found in cookies.")
+      // No token is normal for unauthenticated users - no action needed
       return
     }
     try {
