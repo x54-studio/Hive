@@ -10,11 +10,14 @@ jest.mock('../../api/axiosInstance', () => ({
 
 describe('login thunk', () => {
   test('fulfills with user data on successful login', async () => {
-    // Simulate a successful POST /login response
-    axiosInstance.post.mockResolvedValueOnce({ data: { message: 'Login successful' } })
-    // Simulate a successful GET /protected response returning user profile data
-    axiosInstance.get.mockResolvedValueOnce({
-      data: { username: 'testUser', email: 'test@example.com' },
+    // Simulate a successful POST /login response with user data and claims
+    const futureExp = Math.floor((Date.now() + 900000) / 1000)
+    axiosInstance.post.mockResolvedValueOnce({ 
+      data: { 
+        message: 'Login successful',
+        username: 'testUser',
+        claims: { exp: futureExp }
+      }
     })
 
     const dispatch = jest.fn()
@@ -22,7 +25,10 @@ describe('login thunk', () => {
     const action = login({ username_or_email: 'testUser', password: 'password123' })
     const result = await action(dispatch, getState, undefined)
 
-    expect(result.payload).toEqual({ username: 'testUser', email: 'test@example.com' })
+    expect(result.payload).toEqual({ 
+      username: 'testUser', 
+      claims: { exp: futureExp }
+    })
   })
 
   test('rejects with error message on failed login', async () => {

@@ -1,31 +1,11 @@
 // src/pages/Profile.js
-import React, { useState, useEffect } from 'react'
-import axiosInstance from '../api/axiosInstance'
-import { toast } from 'react-toastify'
+import React from 'react'
+import { useSelector } from 'react-redux'
 
 const Profile = () => {
-  const [userData, setUserData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const response = await axiosInstance.get('/protected', { withCredentials: true })
-        setUserData(response.data)
-      } catch (err) {
-        const errorMessage = err.response?.data?.error || 'Failed to load profile'
-        setError(errorMessage)
-        toast.error(errorMessage, { autoClose: 5000 })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProfile()
-  }, [])
+  // Use user data from Redux state (set during login)
+  // No need to make API call since login already returns this data
+  const userData = useSelector((state) => state.auth.user)
 
   const formatRole = (role) => {
     if (!role) return 'Regular User'
@@ -35,30 +15,12 @@ const Profile = () => {
     return 'Regular User'
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center pt-40">
-        <div className="text-gray-600">Loading profile...</div>
-      </div>
-    )
-  }
-
-  if (error && !userData) {
-    return (
-      <div className="flex flex-col items-center justify-center pt-40">
-        <div className="text-red-600 mb-4">{error}</div>
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
-    )
-  }
-
   if (!userData) {
-    return null
+    return (
+      <div className="flex flex-col items-center justify-center pt-40">
+        <div className="text-gray-600">No user data available</div>
+      </div>
+    )
   }
 
   const username = userData.username || userData.claims?.sub || 'N/A'

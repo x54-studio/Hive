@@ -6,14 +6,40 @@ import { refreshUser } from '../redux/slices/authSlice'
 
 const PersistLogin = () => {
   const dispatch = useDispatch()
-  const { user, error } = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth)
   const [persistDone, setPersistDone] = useState(false)
+  const userRef = React.useRef(null)
+  const loginTimeRef = React.useRef(null)
+
+  // Track when user is set (after login)
+  React.useEffect(() => {
+    if (user && !userRef.current) {
+      // User was just set (login happened)
+      loginTimeRef.current = Date.now()
+      console.log("[PersistLogin] User just logged in, skipping refreshUser check")
+    }
+    userRef.current = user
+  }, [user])
 
   useEffect(() => {
+    // If user was just set (within last 5 seconds), skip refreshUser
+    // This avoids cookie timing issues immediately after login
+    const timeSinceLogin = loginTimeRef.current ? Date.now() - loginTimeRef.current : Infinity
+    const GRACE_PERIOD_MS = 5000
+    
+    if (user && timeSinceLogin < GRACE_PERIOD_MS) {
+      console.log(`[PersistLogin] User just logged in (${timeSinceLogin}ms ago), skipping refreshUser`)
+      setPersistDone(true)
+      return
+    }
+    
     // Dispatch refreshUser and mark persist as done when complete
     dispatch(refreshUser())
       .unwrap()
-      .catch(() => {})
+      .catch(() => {
+        // refreshUser failed - user state is already cleared by the thunk
+        // No need to do anything here, just let persistDone be set
+      })
       .finally(() => setPersistDone(true))
   }, [dispatch])
 
@@ -22,8 +48,10 @@ const PersistLogin = () => {
     return <div>Loading...</div>
   }
 
-  // If persist is done and there's no user, redirect to login.
-  if (!user && error) {
+  // If persist is done and there's no user, redirect to login immediately.
+  // This handles cases where token expired and user was logged out automatically.
+  // useSelector ensures this component re-renders when user state changes.
+  if (!user) {
     return <Navigate to="/login" replace />
   }
 

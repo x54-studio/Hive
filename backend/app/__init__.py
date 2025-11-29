@@ -5,17 +5,27 @@ from flask import Flask, request
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from app.config import Config
 from app.error_handlers import register_error_handlers
 from app.routes import init_app  # Use our routes initializer
 
 jwt = JWTManager()
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[Config.RATELIMIT_DEFAULT],
+    storage_uri=Config.RATELIMIT_STORAGE_URL,
+)
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
+    # CORS configuration: use environment-based origins instead of wildcard
+    cors_origins = Config.CORS_ORIGINS.split(',') if isinstance(Config.CORS_ORIGINS, str) else Config.CORS_ORIGINS
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": cors_origins}})
     jwt.init_app(app)
+    limiter.init_app(app)
 
     # Swagger UI setup.
     swagger_url = '/api/docs'
@@ -25,6 +35,11 @@ def create_app():
 
     # Initialize routes.
     init_app(app)
+
+    # Note: Rate limiting is applied globally via default_limits in limiter initialization
+    # Specific route limits (auth: 5/min, write: 20/min) are configured but require
+    # decorator application at route definition time for full functionality.
+    # Global default limit (100/min) provides base protection for all endpoints.
 
     # Instantiate ArticleService after routes have been registered.
     from services.article_service import ArticleService  # Now safe to import

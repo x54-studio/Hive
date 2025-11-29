@@ -28,16 +28,16 @@ describe('RBAC Demo Component', () => {
     expect(screen.getByText(/admin dashboard/i)).toBeInTheDocument()
   })
 
-  test('displays editor panel for editor role', () => {
+  test('displays moderator panel for moderator role', () => {
     renderWithStore({
-      auth: { user: { role: 'editor', username: 'editorUser' }, loading: false, error: null },
+      auth: { user: { role: 'moderator', username: 'moderatorUser' }, loading: false, error: null },
     })
-    expect(screen.getByText(/editor panel/i)).toBeInTheDocument()
+    expect(screen.getByText(/moderator panel/i)).toBeInTheDocument()
   })
 
   test('displays user profile for regular user role', () => {
     renderWithStore({
-      auth: { user: { role: 'user', username: 'regularUser' }, loading: false, error: null },
+      auth: { user: { role: 'regular', username: 'regularUser' }, loading: false, error: null },
     })
     expect(screen.getByText(/user profile/i)).toBeInTheDocument()
   })

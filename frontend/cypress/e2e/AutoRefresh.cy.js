@@ -6,13 +6,18 @@ describe('Automatic Token Refresh', () => {
       // This stub simulates the refresh endpoint behavior:
       // - It returns a 200 status.
       // - It sets HTTP‑only cookies via a single "set-cookie" header.
-      // - It returns a JSON message.
+      // - It returns a JSON message with claims including exp.
+      const futureExp = Math.floor((Date.now() + 900000) / 1000) // 15 minutes from now
       cy.intercept('POST', '/api/refresh', {
         statusCode: 200,
         headers: {
           'set-cookie': 'access_token=fake-renewed-token; HttpOnly; Path=/; Max-Age=600, refresh_token=fake-renewed-refresh-token; HttpOnly; Path=/; Max-Age=86400'
         },
-        body: { message: "Token refreshed successfully" }
+        body: {
+          message: "Token refreshed successfully",
+          username: 'testUser',
+          claims: { exp: futureExp }
+        }
       }).as('refreshRequest');
   
       // Intercept the GET protected endpoint.
@@ -21,7 +26,7 @@ describe('Automatic Token Refresh', () => {
         statusCode: 200,
         body: {
           username: 'testUser',
-          claims: { exp: Date.now() + 600000 } // Token expires 10 minutes from now.
+          claims: { exp: Math.floor((Date.now() + 900000) / 1000) } // Token expires 15 minutes from now.
         }
       }).as('getProtected');
     });
@@ -35,6 +40,9 @@ describe('Automatic Token Refresh', () => {
       }).then((response) => {
         expect(response.status).to.equal(200);
         expect(response.body).to.have.property('message', 'Token refreshed successfully');
+        expect(response.body).to.have.property('username', 'testUser');
+        expect(response.body).to.have.property('claims');
+        expect(response.body.claims).to.have.property('exp');
         expect(response.headers).to.have.property('set-cookie');
         const setCookieHeader = response.headers['set-cookie'];
         expect(setCookieHeader).to.be.a('string');

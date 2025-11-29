@@ -1,66 +1,89 @@
 # backend/app/routes/user_routes.py
+import jwt
 from flask import Blueprint, request, jsonify, make_response, current_app
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from bson import ObjectId
 from services.user_service import UserService
 from app.config import Config
+from app.schemas import UserRegisterSchema, UserLoginSchema, UserUpdateSchema
+from utilities.decorators import validate_request
+from utilities.auth_utils import set_auth_cookies, delete_auth_cookies
 
 user_routes = Blueprint("user_routes", __name__)
 user_service = UserService(Config)
 
+def get_limiter():
+    """Get limiter instance from app context."""
+    from flask import current_app
+    return current_app.extensions.get('limiter')
+
+
 @user_routes.route("/api/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    if not data or not all(k in data for k in ("username", "email", "password")):
-        return jsonify({"error": "Missing required fields"}), 400
+@validate_request(UserRegisterSchema)
+def register(validated_data):
+    # Rate limiting applied via limiter decorator in __init__.py
     result = user_service.register_user(
-        data["username"], data["email"], data["password"]
+        validated_data["username"], validated_data["email"], validated_data["password"]
     )
-    if "error" in result:
-        if "already exists" in result["error"]:
-            return jsonify(result), 409
-        return jsonify(result), 400
     return jsonify(result), 201
 
 @user_routes.route("/api/login", methods=["POST"])
-def login():
-    data = request.get_json()
-    if not data or not all(k in data for k in ("username_or_email", "password")):
-        return jsonify({"error": "Missing email or password"}), 400
-    result = user_service.login_user(data["username_or_email"], data["password"])
-    if "error" in result:
-        return jsonify(result), 401
-    response_data = {"message": result["message"]}
+@validate_request(UserLoginSchema)
+def login(validated_data):
+    # Rate limiting applied via limiter decorator in __init__.py
+    result = user_service.login_user(
+        validated_data["username_or_email"], validated_data["password"]
+    )
+    
+    # Decode JWT to get claims for response (same format as /protected endpoint)
+    decoded_token = jwt.decode(
+        result["access_token"],
+        Config.JWT_SECRET_KEY,
+        algorithms=["HS256"],
+        options={"verify_signature": True}
+    )
+    
+    response_data = {
+        "message": result["message"],
+        "username": result["user"]["username"],
+        "claims": decoded_token
+    }
     if Config.TESTING:
         response_data["access_token"] = result["access_token"]
         response_data["refresh_token"] = result["refresh_token"]
     resp = make_response(jsonify(response_data))
-    resp.set_cookie("access_token", result["access_token"], httponly=True, max_age=int(Config.JWT_ACCESS_TOKEN_EXPIRES))
-    resp.set_cookie("refresh_token", result["refresh_token"], httponly=True, max_age=int(Config.JWT_REFRESH_TOKEN_EXPIRES))
+    set_auth_cookies(resp, result, Config)
     return resp, 200
 
 @user_routes.route("/api/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Logged out successfully"}))
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    delete_auth_cookies(response, Config)
     return response
 
 @user_routes.route("/api/refresh", methods=["POST"])
 def refresh():
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token or not refresh_token.strip():
-        return jsonify({"error": "Missing refresh token"}), 401
+    refresh_token = request.cookies.get("refresh_token", "")
     result = user_service.refresh_access_token(refresh_token)
-    if "error" in result:
-        return jsonify(result), 401
-    response_data = {"message": result["message"]}
+    
+    # Decode new access token to get claims/exp for frontend
+    decoded_token = jwt.decode(
+        result["access_token"],
+        Config.JWT_SECRET_KEY,
+        algorithms=["HS256"],
+        options={"verify_signature": True}
+    )
+    
+    response_data = {
+        "message": result["message"],
+        "username": result["user"]["username"],
+        "claims": decoded_token
+    }
     if Config.TESTING:
         response_data["access_token"] = result["access_token"]
         response_data["refresh_token"] = result["refresh_token"]
     resp = make_response(jsonify(response_data), 200)
-    resp.set_cookie("access_token", result["access_token"], httponly=True)
-    resp.set_cookie("refresh_token", result["refresh_token"], httponly=True)
+    set_auth_cookies(resp, result, Config)
     return resp
 
 @user_routes.route("/api/protected", methods=["GET"])
@@ -74,38 +97,31 @@ def protected():
 
 @user_routes.route("/api/users", methods=["POST"])
 @jwt_required()
-def create_user_admin():
+@validate_request(UserRegisterSchema)
+def create_user_admin(validated_data):
     claims = get_jwt()
     if claims.get("role", "").lower() != "admin":
-        return jsonify({"error": "User not authorized to create users"}), 403
-    data = request.get_json()
-    if not data or not all(k in data for k in ("username", "email", "password")):
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({"error": "User not authorized to create users", "message": "User not authorized to create users"}), 403
     result = user_service.register_user(
-        data["username"], data["email"], data["password"]
+        validated_data["username"], validated_data["email"], validated_data["password"]
     )
-    if "error" in result:
-        return jsonify(result), 400
     return jsonify(result), 201
 
 @user_routes.route("/api/users/<string:user_id>", methods=["PUT"])
 @jwt_required()
-def update_user(user_id):
+@validate_request(UserUpdateSchema)
+def update_user(user_id, validated_data):
     try:
         ObjectId(user_id)
     except Exception:
-        return jsonify({"error": "Invalid user id format"}), 400
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No update data provided"}), 400
+        return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
+    # Check if validated_data is empty (all fields are optional, so empty dict means no update data)
+    if not validated_data or (isinstance(validated_data, dict) and len(validated_data) == 0):
+        return jsonify({"error": "No update data provided", "message": "No update data provided"}), 400
     claims = get_jwt()
     if claims.get("role", "").lower() != "admin":
-        return jsonify({"error": "User not authorized to update users"}), 403
-    result = user_service.update_user(user_id, data)
-    if "error" in result:
-        if "not found" in result["error"].strip().lower():
-            return jsonify(result), 404
-        return jsonify(result), 400
+        return jsonify({"error": "User not authorized to update users", "message": "User not authorized to update users"}), 403
+    result = user_service.update_user(user_id, validated_data)
     return jsonify(result), 200
 
 @user_routes.route("/api/users/<string:user_id>", methods=["DELETE"])
@@ -114,15 +130,12 @@ def delete_user(user_id):
     try:
         ObjectId(user_id)
     except Exception:
-        return jsonify({"error": "Invalid user id format"}), 400
+        return jsonify({"error": "Invalid user id format", "message": "Invalid user id format"}), 400
     claims = get_jwt()
     if claims.get("role", "").lower() != "admin":
-        return jsonify({"error": "User not authorized to delete users"}), 403
+        return jsonify({"error": "User not authorized to delete users", "message": "User not authorized to delete users"}), 403
     result = user_service.delete_user(user_id)
-    if "message" in result:
-        return jsonify(result), 200
-    else:
-        return jsonify(result), 404
+    return jsonify(result), 200
 
 # New Route: List Users with Pagination
 @user_routes.route("/api/users", methods=["GET"])
@@ -130,7 +143,7 @@ def delete_user(user_id):
 def list_users():
     claims = get_jwt()
     if claims.get("role", "").lower() != "admin":
-        return jsonify({"error": "User not authorized to view users"}), 403
+        return jsonify({"error": "User not authorized to view users", "message": "User not authorized to view users"}), 403
     try:
         page = int(request.args.get("page", 1))
         size = int(request.args.get("size", 10))

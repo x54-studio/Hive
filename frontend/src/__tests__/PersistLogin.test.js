@@ -50,9 +50,9 @@ describe('PersistLogin Component', () => {
     // Immediately after render, the "Loading..." indicator should be present.
     expect(screen.getByText(/loading/i)).toBeInTheDocument()
 
-    // Wait for the refreshUser thunk to complete and for the Profile component to be rendered.
+    // Wait for the refreshUser thunk to complete and for the Profile page heading to appear.
     await waitFor(() => {
-      expect(screen.getByText(/profile page/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     }, { timeout: 500 })
   })
 

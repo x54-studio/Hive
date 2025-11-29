@@ -14,14 +14,10 @@ const axiosInstance = axios.create({
   withCredentials: true,
 })
 
-// Add a request interceptor to include auth token if available.
+// Request interceptor: cookies are automatically sent with requests
+// No need to manually add Authorization header since backend uses cookies
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Example: retrieve token from localStorage or state.
-    const token = localStorage.getItem('token') // adjust as needed
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
     return config
   },
   (error) => Promise.reject(error)
@@ -32,19 +28,34 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
+    // Don't retry refresh endpoint failures
     if (originalRequest.url.includes('/refresh')) {
       return Promise.reject(error)
     }
 
+    // Handle 401 errors by attempting token refresh
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
+      
+      // Ensure appStore is available before attempting refresh
+      if (!appStore) {
+        return Promise.reject(error)
+      }
+
       try {
-        await appStore.dispatch(refresh())
-        return axiosInstance(originalRequest)
-      } catch (refreshError) {
-        if (appStore) {
+        const refreshResult = await appStore.dispatch(refresh())
+        // If refresh failed, logout
+        if (refresh.fulfilled.match(refreshResult)) {
+          // Retry the original request with new token
+          return axiosInstance(originalRequest)
+        } else {
+          // Refresh failed, logout user
           await appStore.dispatch(logout())
+          return Promise.reject(error)
         }
+      } catch (refreshError) {
+        // Refresh threw an error, logout user
+        await appStore.dispatch(logout())
         return Promise.reject(refreshError)
       }
     }

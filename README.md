@@ -51,15 +51,25 @@ Hive is a full-stack web application for article management with role-based acce
 
 2. **Optional variables** (have defaults):
    ```bash
-   MONGO_URI=mongodb://admin:hivepass123@localhost:27027/  # For local dev
+   MONGO_URI=mongodb://admin:your_mongo_password@localhost:27027/  # For local dev (replace with actual password)
    MONGO_DB_NAME=hive_db
    FLASK_ENV=development
+   CORS_ORIGINS=http://localhost:3000  # Comma-separated list, REQUIRED in production
    JWT_ACCESS_TOKEN_EXPIRES=900
    JWT_REFRESH_TOKEN_EXPIRES=604800
+   RATELIMIT_DEFAULT=100 per minute  # Global rate limit
+   RATELIMIT_AUTH=5 per minute  # Rate limit for auth endpoints
+   RATELIMIT_WRITE=20 per minute  # Rate limit for write endpoints
+   RATELIMIT_STORAGE_URL=memory://  # Rate limit storage (use Redis URL for production)
    TESTING=false
    ```
 
-**Note:** When using Docker Compose, `MONGO_URI` is automatically set by `docker-compose.yml`, so you don't need it in `backend/.env` for Docker. Only include `MONGO_URI` if running Flask locally without Docker.
+**Note:** When using Docker Compose, `MONGO_URI` is automatically set by `docker-compose.yml` using environment variables. You must set the following environment variables for Docker Compose:
+- `MONGO_ROOT_USERNAME` (defaults to "admin" if not set)
+- `MONGO_ROOT_PASSWORD` (required - no default)
+- `MONGO_DB_NAME` (defaults to "hive_db" if not set)
+
+Create a `.env` file in the project root with these variables, or export them in your shell before running `docker-compose up`.
 
 **Security Warning:**
 - Never commit `.env` files containing real secrets
@@ -69,9 +79,25 @@ Hive is a full-stack web application for article management with role-based acce
 
 ### Docker Compose Setup
 
-1. Create `backend/.env` file with required variables (see Environment Variables section above).
+1. Create a `.env` file in the project root by copying `env.docker.example`:
+   ```bash
+   cp env.docker.example .env
+   ```
+   Then edit `.env` and set your MongoDB credentials:
+   ```bash
+   MONGO_ROOT_USERNAME=admin
+   MONGO_ROOT_PASSWORD=your_secure_password_here
+   MONGO_DB_NAME=hive_db
+   ```
 
-2. Start all services:
+2. Create `backend/.env` file with required Flask variables (see Environment Variables section above).
+   You can use `backend/env.example` as a template:
+   ```bash
+   cp backend/env.example backend/.env
+   ```
+   Then edit `backend/.env` and set your `SECRET_KEY` and `JWT_SECRET_KEY`.
+
+3. Start all services:
    ```bash
    docker-compose up
    ```
@@ -81,12 +107,12 @@ Hive is a full-stack web application for article management with role-based acce
    docker-compose up -d
    ```
 
-3. The application will be available at:
+4. The application will be available at:
    - Backend API: http://localhost:5000
    - Frontend: http://localhost:3000
    - MongoDB: localhost:27027
 
-4. To stop services:
+5. To stop services:
    ```bash
    docker-compose down
    ```
@@ -138,14 +164,32 @@ Hive is a full-stack web application for article management with role-based acce
    npm start
    ```
 
-### Security Headers
+### Security Features
 
+**Security Headers:**
 The application includes security headers on all API responses:
 - `Content-Security-Policy` - Restricts resource loading
 - `X-Frame-Options: DENY` - Prevents clickjacking
 - `X-Content-Type-Options: nosniff` - Prevents MIME type sniffing
 
 These headers are automatically applied to all routes via Flask's `@app.after_request` decorator.
+
+**CORS Configuration:**
+- CORS is configured via the `CORS_ORIGINS` environment variable (comma-separated list)
+- Defaults to `http://localhost:3000` in development
+- **Required** in production - must be explicitly set
+- Wildcard origins (`*`) are not allowed for security
+
+**Rate Limiting:**
+- Global rate limit: 100 requests/minute per IP (configurable via `RATELIMIT_DEFAULT`)
+- Authentication endpoints (`/api/login`, `/api/register`): 5 requests/minute (configurable via `RATELIMIT_AUTH`)
+- Write endpoints (POST, PUT, DELETE): 20 requests/minute (configurable via `RATELIMIT_WRITE`)
+- Rate limits are configurable via environment variables
+
+**Input Validation:**
+- All API endpoints use Pydantic schemas for request validation
+- Validation errors return HTTP 422 with detailed error messages
+- Validates data types, required fields, length constraints, and format (e.g., email)
 
 ## Testing
 

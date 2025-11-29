@@ -1,12 +1,17 @@
 // src/__tests__/ProtectedRoute.test.js
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import authReducer from '../redux/slices/authSlice'
 import ProtectedRoute from '../components/ProtectedRoute'
 import Profile from '../pages/Profile'
+import axiosInstance from '../api/axiosInstance'
+import MockAdapter from 'axios-mock-adapter'
+
+// Mock axios instance
+const mock = new MockAdapter(axiosInstance)
 
 describe('ProtectedRoute', () => {
   const renderWithProviders = (store, initialEntries) => {
@@ -35,7 +40,13 @@ describe('ProtectedRoute', () => {
     expect(screen.getByTestId('login-page')).toBeInTheDocument()
   })
 
-  test('renders protected component when user is authenticated', () => {
+  test('renders protected component when user is authenticated', async () => {
+    // Mock the /protected endpoint that Profile component calls
+    mock.onGet('/protected').reply(200, {
+      username: 'testUser',
+      claims: { sub: 'testUser', role: 'regular' }
+    })
+
     const store = configureStore({
       reducer: { auth: authReducer },
       preloadedState: {
@@ -44,7 +55,20 @@ describe('ProtectedRoute', () => {
     })
 
     renderWithProviders(store, ['/profile'])
-    // Assume Profile component renders "Profile Page"
-    expect(screen.getByText(/profile page/i)).toBeInTheDocument()
+    
+    // Wait for loading to complete - first wait for "Loading profile..." to disappear
+    await waitFor(() => {
+      expect(screen.queryByText(/loading profile/i)).not.toBeInTheDocument()
+    }, { timeout: 3000 })
+    
+    // Then verify profile content is displayed - use heading for Profile and check username
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByText(/testUser/i)).toBeInTheDocument()
+    }, { timeout: 3000 })
+  })
+
+  afterEach(() => {
+    mock.reset()
   })
 })

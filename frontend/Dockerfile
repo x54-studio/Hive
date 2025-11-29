@@ -4,12 +4,17 @@ FROM node:22
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
-COPY package.json .
-RUN npm install
+# Copy package files first for better layer caching
+COPY package.json package-lock.json* ./
 
-# Copy source
+# Install dependencies (use ci for faster, reproducible installs)
+RUN npm ci --only=production=false
+
+# Copy source code
 COPY . .
+
+# Expose port
+EXPOSE 3000
 
 # Start app
 CMD ["npm", "start"]

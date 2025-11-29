@@ -1,9 +1,11 @@
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
-
+from utilities.logger import get_logger
 
 load_dotenv()
+
+logger = get_logger(__name__)
 
 
 class Config:
@@ -13,7 +15,7 @@ class Config:
 
     # Determine if we're in testing mode.
     TESTING = os.getenv("TESTING", "false").lower() == "true"
-    print(f"TESTING: {TESTING}")
+    logger.debug(f"TESTING mode: {TESTING}")
 
     if TESTING:
         MONGO_URI = os.getenv("TEST_MONGO_URI", "mongodb://localhost:27017/")
@@ -37,6 +39,19 @@ class Config:
             "Set it in your .env file or environment variables."
         )
 
+    # CORS Configuration
+    FLASK_ENV = os.getenv("FLASK_ENV", "development")
+    if FLASK_ENV == "production":
+        CORS_ORIGINS = os.getenv("CORS_ORIGINS")
+        if not CORS_ORIGINS:
+            raise ValueError(
+                "CORS_ORIGINS environment variable is required in production. "
+                "Set it to a comma-separated list of allowed origins."
+            )
+    else:
+        # Default to localhost:3000 for development
+        CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+
     # JWT configuration - Production values
     JWT_ALGORITHM = "HS256"
     # Access token expires in 15 minutes (900 seconds)
@@ -46,7 +61,7 @@ class Config:
     JWT_TOKEN_LOCATION = ["cookies"]
 
     # Secure cookie settings: use production settings if FLASK_ENV is production
-    if os.getenv("FLASK_ENV") == "production":
+    if FLASK_ENV == "production":
         JWT_COOKIE_SECURE = True
         JWT_COOKIE_CSRF_PROTECT = True
     else:
@@ -55,8 +70,17 @@ class Config:
 
     JWT_ACCESS_COOKIE_NAME = "access_token"
     JWT_REFRESH_COOKIE_NAME = "refresh_token"
+    
+    # Cookie SameSite configuration: "Lax" for dev (works with proxy), "None" for production (requires HTTPS)
+    COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "Lax" if FLASK_ENV == "development" else "None")
 
-    DEBUG = os.getenv("FLASK_ENV") != "production"
+    # Rate Limiting Configuration
+    RATELIMIT_STORAGE_URL = os.getenv("RATELIMIT_STORAGE_URL", "memory://")
+    RATELIMIT_DEFAULT = os.getenv("RATELIMIT_DEFAULT", "100 per minute")
+    RATELIMIT_AUTH = os.getenv("RATELIMIT_AUTH", "5 per minute")
+    RATELIMIT_WRITE = os.getenv("RATELIMIT_WRITE", "20 per minute")
+
+    DEBUG = FLASK_ENV != "production"
 
     def as_dict(self):
         """

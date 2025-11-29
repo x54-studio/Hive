@@ -12,7 +12,7 @@ const AdminUserManagement = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    role: 'user',
+    role: 'regular',
     password: '',
   })
 
@@ -87,16 +87,31 @@ const AdminUserManagement = () => {
     e.preventDefault()
     if (editingUser) {
       try {
-        const response = await axiosInstance.put(`/users/${editingUser._id}`, formData)
+        // Remove empty password field for updates
+        const updateData = { ...formData }
+        if (!updateData.password || updateData.password.trim() === '') {
+          delete updateData.password
+        }
+        const response = await axiosInstance.put(`/users/${editingUser._id}`, updateData)
         toast.success('User updated successfully', { autoClose: 2000 })
-        setUsers((prev) =>
-          prev.map((u) => (u._id === editingUser._id ? response.data : u))
-        )
+        // Update the user in the list with returned data
+        if (response.data?.user) {
+          setUsers((prev) =>
+            prev.map((u) => (u._id === editingUser._id ? { ...response.data.user, _id: editingUser._id } : u))
+          )
+        } else {
+          // Fallback: refresh the list
+          setUsers([])
+          setPage(1)
+          setHasMore(true)
+          fetchUsers(1)
+        }
         setEditingUser(null)
         setShowForm(false)
-        setFormData({ username: '', email: '', role: 'user', password: '' })
+        setFormData({ username: '', email: '', role: 'regular', password: '' })
       } catch (err) {
-        toast.error('Failed to update user', { autoClose: false })
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to update user'
+        toast.error(errorMsg, { autoClose: false })
       }
     } else {
       try {
@@ -107,7 +122,7 @@ const AdminUserManagement = () => {
         setPage(1)
         setHasMore(true)
         setShowForm(false)
-        setFormData({ username: '', email: '', role: 'user', password: '' })
+        setFormData({ username: '', email: '', role: 'regular', password: '' })
         fetchUsers(1)
       } catch (err) {
         toast.error('Failed to create user', { autoClose: 15000 })
@@ -136,7 +151,7 @@ const AdminUserManagement = () => {
     setFormData({
       username: user.username,
       email: user.email,
-      role: user.role,
+      role: user.role || 'regular',
       password: '',
     })
     setShowForm(true)
@@ -153,7 +168,7 @@ const AdminUserManagement = () => {
           onClick={() => {
             setShowForm(true)
             setEditingUser(null)
-            setFormData({ username: '', email: '', role: 'user', password: '' })
+            setFormData({ username: '', email: '', role: 'regular', password: '' })
           }}
         >
           Create New User
@@ -208,8 +223,8 @@ const AdminUserManagement = () => {
               autoComplete="off"
             >
               <option value="admin">Admin</option>
-              <option value="editor">Editor</option>
-              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="regular">Regular</option>
             </select>
           </div>
           {!editingUser && (

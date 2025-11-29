@@ -167,7 +167,11 @@ To run tests using PowerShell, follow these steps:
 
 ### Continuous Integration
 
-Update your CI/CD pipeline to run tests from the `__tests__` directory and set environment variables (e.g., `TESTING`, `LOG_LEVEL`) appropriately during the build process.
+CI/CD pipeline to be implemented. Future integration will include:
+- Automated test execution from the `__tests__` directory
+- Environment variable configuration (e.g., `TESTING`, `LOG_LEVEL`)
+- Code coverage reporting and enforcement
+- Automated deployment workflows
 
 ## License
 
@@ -181,11 +185,13 @@ The backend stack for Hive includes:
 - **Flask:** The web framework that powers the RESTful API.
 - **Flask-CORS:** To handle cross-origin resource sharing.
 - **Flask-JWT-Extended & PyJWT:** For JWT-based authentication.
+- **Flask-Limiter:** For rate limiting API endpoints.
 - **Flask-Swagger-UI:** For interactive API documentation.
+- **Pydantic:** For request validation and data modeling.
 - **PyMongo:** For interacting with MongoDB.
 - **python-dotenv:** For managing environment variables.
 - **bcrypt:** For secure password hashing.
 - **Docker:** For containerizing and deploying the application.
-- **Linting & Testing:** Using tools like Flake8, Pylint, and pytest for code quality and testing.
+- **Linting & Testing:** Using tools like Flake8, Pylint, and unittest for code quality and testing.
 
 ---

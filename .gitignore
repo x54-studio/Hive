@@ -42,9 +42,7 @@ frontend/cypress/downloads/
 *.log
 
 # Working documents
-PROJECT_KNOWLEDGE.md
-project_truth_audit.md
-fix_Hive.md
+
 
 # Scripts output
 TreeStructure.txt

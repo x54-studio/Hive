@@ -1,6 +1,6 @@
 // src/pages/Register.js
-import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import React, { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { register } from '../redux/slices/authSlice'
 import { toast } from 'react-toastify'
@@ -9,6 +9,15 @@ import AsyncButton from '../components/AsyncButton'
 const Register = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { user } = useSelector((state) => state.auth)
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/profile', { replace: true })
+    }
+  }, [user, navigate])
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -33,7 +42,13 @@ const Register = () => {
         toast.success('User registered successfully! Please log in.')
         navigate('/login')
       } else {
-        toast.error(resultAction.payload.error || 'Registration failed.')
+        const errorMsg = resultAction.payload?.message || resultAction.payload?.error || 'Registration failed.'
+        const details = resultAction.payload?.details
+        if (details && Array.isArray(details)) {
+          toast.error(`${errorMsg}: ${details.join('; ')}`)
+        } else {
+          toast.error(errorMsg)
+        }
       }
     } catch (error) {
       toast.error('Registration failed. Please try again.')
@@ -56,6 +71,7 @@ const Register = () => {
               placeholder="Username"
               value={formData.username}
               onChange={handleChange}
+              autoComplete="username"
               className="w-full p-3 border rounded focus:outline-none focus:border-blue-500"
             />
           </div>
@@ -70,6 +86,7 @@ const Register = () => {
               placeholder="Email"
               value={formData.email}
               onChange={handleChange}
+              autoComplete="email"
               className="w-full p-3 border rounded focus:outline-none focus:border-blue-500"
             />
           </div>

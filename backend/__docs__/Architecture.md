@@ -120,9 +120,8 @@ Refer to the diagrams in the `__docs__/diagrams/` folder for visual representati
 
 ## 10. Continuous Integration & Deployment
 
-- The CI/CD pipeline (configured via tools like GitHub Actions) runs the test suite on every push.
-- Code coverage thresholds are enforced, and detailed reports are generated.
-- Docker is used for containerized deployment, ensuring consistent environments from development to production.
+- **Docker:** Used for containerized deployment, ensuring consistent environments from development to production.
+- **CI/CD Pipeline:** To be implemented. Future integration will include automated test execution on push, code coverage reporting, and deployment automation.
 
 ---
 

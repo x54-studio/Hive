@@ -1,7 +1,7 @@
 // src/pages/Login.js
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { login } from '../redux/slices/authSlice'
 import { toast } from 'react-toastify'
 import AsyncButton from '../components/AsyncButton'
@@ -13,6 +13,14 @@ const Login = () => {
   })
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { user } = useSelector((state) => state.auth)
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/profile', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -24,13 +32,33 @@ const Login = () => {
     try {
       const resultAction = await dispatch(login(formData))
       if (login.fulfilled.match(resultAction)) {
-        toast.success('Operation successful', { autoClose: 1500 });
+        toast.success('Login successful', { autoClose: 1500 });
         navigate('/profile')
       } else {
-        toast.error(resultAction.payload.error || 'Login failed')
+        // Log the full error for debugging
+        console.error('[Login] Login failed:', resultAction.payload)
+        
+        // Handle both object and string error payloads
+        let errorMsg = 'Login failed'
+        if (typeof resultAction.payload === 'string') {
+          errorMsg = resultAction.payload
+        } else if (resultAction.payload) {
+          errorMsg = resultAction.payload.message || resultAction.payload.error || JSON.stringify(resultAction.payload)
+        }
+        
+        toast.error(errorMsg)
       }
     } catch (error) {
-      toast.error('Login failed')
+      // Log the actual error
+      console.error('[Login] Exception caught:', error)
+      console.error('[Login] Error details:', error.response?.data || error.message || error)
+      
+      // Show actual error message if available
+      const errorMsg = error.response?.data?.message || 
+                       error.response?.data?.error || 
+                       error.message || 
+                       'Login failed'
+      toast.error(errorMsg)
     }
   }
 
@@ -45,6 +73,7 @@ const Login = () => {
             placeholder="Username or Email"
             value={formData.username_or_email}
             onChange={handleChange}
+            autoComplete="username"
             className="w-full p-3 border rounded focus:outline-none focus:border-blue-500"
           />
         </div>
@@ -55,6 +84,7 @@ const Login = () => {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
+            autoComplete="current-password"
             className="w-full p-3 border rounded focus:outline-none focus:border-blue-500"
           />
         </div>

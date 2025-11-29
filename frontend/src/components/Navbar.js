@@ -29,6 +29,11 @@ const Navbar = () => {
         {user ? (
           <>
             <li>
+              <Link to="/" className="text-blue-600 hover:underline">
+                [Home]
+              </Link>
+            </li>
+            <li>
               <Link to="/profile" className="text-blue-600 hover:underline">
                 Profile
               </Link>
@@ -65,6 +70,11 @@ const Navbar = () => {
           </>
         ) : (
           <>
+            <li>
+              <Link to="/" className="text-blue-600 hover:underline">
+                [Home]
+              </Link>
+            </li>
             <li>
               <Link to="/register" className="text-blue-600 hover:underline">
                 Register

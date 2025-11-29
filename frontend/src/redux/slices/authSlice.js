@@ -6,15 +6,22 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ username_or_email, password }, { rejectWithValue }) => {
     try {
-      await axiosInstance.post(
+      // Login endpoint now returns user data directly, avoiding cookie timing issues
+      const loginResp = await axiosInstance.post(
         '/login',
         { username_or_email, password },
         { withCredentials: true }
       )
-      const userResp = await axiosInstance.get('/protected', { withCredentials: true })
-      return userResp.data
+      
+      // Return user data from login response (same format as /protected)
+      return {
+        username: loginResp.data.username,
+        claims: loginResp.data.claims
+      }
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Login failed')
+      // Log error for debugging
+      console.error('[authSlice] Login error:', error.response?.data || error.message)
+      return rejectWithValue(error.response?.data || { message: 'Login failed' })
     }
   }
 )
@@ -25,7 +32,7 @@ export const register = createAsyncThunk(
     try {
       const response = await axiosInstance.post(
         '/register',
-        { username, email, password, confirmPassword },
+        { username, email, password },
         { withCredentials: true }
       )
       return response.data
@@ -49,10 +56,21 @@ export const logout = createAsyncThunk(
 
 export const refresh = createAsyncThunk(
   'auth/refresh',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
-      await axiosInstance.post('/refresh', {}, { withCredentials: true })
-      return
+      const response = await axiosInstance.post('/refresh', {}, { withCredentials: true })
+      // Refresh endpoint now returns user data with claims, update state directly
+      if (response.data?.username && response.data?.claims) {
+        // Update user state with data from refresh response (no need for extra /protected call)
+        dispatch(refreshUser.fulfilled({
+          username: response.data.username,
+          claims: response.data.claims
+        }))
+      } else {
+        // Fallback to /protected if response format unexpected
+        await dispatch(refreshUser())
+      }
+      return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Refresh failed')
     }
@@ -118,11 +136,16 @@ const authSlice = createSlice({
         state.error = action.payload
         state.user = null
       })
-      .addCase(refresh.fulfilled, (state) => {
+      .addCase(refresh.pending, (state) => {
         state.error = null
       })
+      .addCase(refresh.fulfilled, (state) => {
+        state.error = null
+        // User state is updated via refreshUser thunk
+      })
       .addCase(refresh.rejected, (state, action) => {
-        state.user = null
+        // Don't clear user state on refresh failure - might be cookie issue
+        // User stays logged in, but refresh failed
         state.error = action.payload
       })
       .addCase(refreshUser.pending, (state) => {
@@ -135,7 +158,8 @@ const authSlice = createSlice({
       .addCase(refreshUser.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
-        state.user = null
+        // Don't clear user state on refreshUser failure - might be cookie issue
+        // User stays logged in with existing state
       })
   }
 })
