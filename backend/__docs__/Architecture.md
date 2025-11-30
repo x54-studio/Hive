@@ -111,17 +111,16 @@ Refer to the diagrams in the `__docs__/diagrams/` folder for visual representati
   Service and repository layers are tested individually.
 - **Integration Testing:**  
   Endpoints are tested end-to-end using Flask’s test client.
-- **TDD Approach:**  
-  Tests are written before the implementation to drive development. All new tests reside under the `__tests__` directory.
+- **Testing Approach:**  
+  Comprehensive test suites are maintained to ensure reliability and regression prevention. All new tests reside under the `__tests__` directory.
 - **Coverage:**  
   Test coverage reports are generated using `coverage.py` to ensure that most of the codebase is tested.
 
 ---
 
-## 10. Continuous Integration & Deployment
+## 10. Deployment
 
 - **Docker:** Used for containerized deployment, ensuring consistent environments from development to production.
-- **CI/CD Pipeline:** To be implemented. Future integration will include automated test execution on push, code coverage reporting, and deployment automation.
 
 ---
 

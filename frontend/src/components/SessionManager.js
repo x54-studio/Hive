@@ -28,14 +28,18 @@ const SessionManager = () => {
   }, [user])
 
   useEffect(() => {
-    console.log("[SessionManager] ========================================")
-    console.log("[SessionManager] useEffect triggered - checking authentication")
-    console.log("[SessionManager] Current user state:", user ? "authenticated" : "not authenticated")
-    console.log("[SessionManager] Current pathname:", window.location.pathname)
+    if (IS_DEVELOPMENT) {
+      console.log("[SessionManager] ========================================")
+      console.log("[SessionManager] useEffect triggered - checking authentication")
+      console.log("[SessionManager] Current user state:", user ? "authenticated" : "not authenticated")
+      console.log("[SessionManager] Current pathname:", window.location.pathname)
+    }
     
     // If no user in Redux state, no need to check
     if (!user) {
-      console.log("[SessionManager] No user state, tokenExpirationTime set to null (expected for unauthenticated)")
+      if (IS_DEVELOPMENT) {
+        console.log("[SessionManager] No user state, tokenExpirationTime set to null (expected for unauthenticated)")
+      }
       setTokenExpirationTime(null)
       loginTimeRef.current = null
       return
@@ -46,13 +50,17 @@ const SessionManager = () => {
     const GRACE_PERIOD_MS = 5000 // 5 seconds
     
     if (timeSinceLogin < GRACE_PERIOD_MS) {
-      console.log(`[SessionManager] Within grace period after login (${timeSinceLogin}ms < ${GRACE_PERIOD_MS}ms), skipping verification`)
+      if (IS_DEVELOPMENT) {
+        console.log(`[SessionManager] Within grace period after login (${timeSinceLogin}ms < ${GRACE_PERIOD_MS}ms), skipping verification`)
+      }
       // Use token expiration from login response if available
       if (user?.claims?.exp) {
         const expTime = user.claims.exp * 1000
         if (expTime > Date.now()) {
           setTokenExpirationTime(expTime)
-          console.log("[SessionManager] Using token expiration from login response:", new Date(expTime).toLocaleTimeString())
+          if (IS_DEVELOPMENT) {
+            console.log("[SessionManager] Using token expiration from login response:", new Date(expTime).toLocaleTimeString())
+          }
         }
       } else {
         // Fallback: use default 15 minutes from now
@@ -154,10 +162,14 @@ const SessionManager = () => {
     }
 
     // Check token on mount
-    console.log("[SessionManager] Calling checkTokenExpiration() on mount...")
+    if (IS_DEVELOPMENT) {
+      console.log("[SessionManager] Calling checkTokenExpiration() on mount...")
+    }
     checkTokenExpiration().then((isValid) => {
-      console.log("[SessionManager] checkTokenExpiration() returned:", isValid)
-      console.log("[SessionManager] ========================================")
+      if (IS_DEVELOPMENT) {
+        console.log("[SessionManager] checkTokenExpiration() returned:", isValid)
+        console.log("[SessionManager] ========================================")
+      }
     })
     
     // Set up periodic check as fallback safety net (only if proactive refresh fails silently)
@@ -249,10 +261,14 @@ const SessionManager = () => {
       try {
         const refreshResult = await dispatch(refresh())
         
-        console.log("[SessionManager] Refresh result:", refresh.fulfilled.match(refreshResult) ? "SUCCESS" : "FAILED")
+        if (IS_DEVELOPMENT) {
+          console.log("[SessionManager] Refresh result:", refresh.fulfilled.match(refreshResult) ? "SUCCESS" : "FAILED")
+        }
         
         if (refresh.fulfilled.match(refreshResult)) {
-          console.log("[SessionManager] Refresh successful, extracting exp from response...")
+          if (IS_DEVELOPMENT) {
+            console.log("[SessionManager] Refresh successful, extracting exp from response...")
+          }
           const refreshData = refreshResult.payload
           const claims = refreshData?.claims
           
@@ -295,7 +311,9 @@ const SessionManager = () => {
               const newExpTime = claims.exp * 1000
               const newLifetimeMinutes = Math.floor(newLifetime / 60000)
               const newLifetimeSeconds = Math.floor((newLifetime % 60000) / 1000)
-              console.log("[SessionManager] New token expires at:", new Date(newExpTime).toLocaleTimeString(), "(in", newLifetimeMinutes, "min", newLifetimeSeconds, "sec)")
+              if (IS_DEVELOPMENT) {
+                console.log("[SessionManager] New token expires at:", new Date(newExpTime).toLocaleTimeString(), "(in", newLifetimeMinutes, "min", newLifetimeSeconds, "sec)")
+              }
               
               setTokenExpirationTime(newExpTime)
             }
@@ -387,9 +405,11 @@ const SessionManager = () => {
       if (window.location.pathname !== '/login') {
         navigate('/login', { replace: true })
       }
-    }, 100)
+      }, 100)
     
-    console.log("[SessionManager] ========================================")
+    if (IS_DEVELOPMENT) {
+      console.log("[SessionManager] ========================================")
+    }
   }, [dispatch, navigate, user])
 
   useTokenRefresh(tokenExpirationTime, refreshCallback, REFRESH_BUFFER_MS, (error) => {
@@ -402,7 +422,9 @@ const SessionManager = () => {
 
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log("[SessionManager] Tab became visible, checking token status...")
+        if (IS_DEVELOPMENT) {
+          console.log("[SessionManager] Tab became visible, checking token status...")
+        }
         const isValid = await checkTokenExpiration()
         
         if (isValid) {
@@ -414,7 +436,9 @@ const SessionManager = () => {
           if (expTime) {
             const timeLeft = expTime - Date.now()
             if (timeLeft < REFRESH_BUFFER_MS) {
-              console.log("[SessionManager] Token expires soon (< buffer), triggering immediate refresh")
+              if (IS_DEVELOPMENT) {
+                console.log("[SessionManager] Token expires soon (< buffer), triggering immediate refresh")
+              }
               refreshCallback(true) // Skip multi-tab check for visibility-triggered refresh
             } else {
               // Reschedule if needed (state update ignored if same value)

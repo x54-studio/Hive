@@ -4,6 +4,8 @@ import { Outlet, Navigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { refreshUser } from '../redux/slices/authSlice'
 
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
+
 const PersistLogin = () => {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
@@ -16,7 +18,9 @@ const PersistLogin = () => {
     if (user && !userRef.current) {
       // User was just set (login happened)
       loginTimeRef.current = Date.now()
-      console.log("[PersistLogin] User just logged in, skipping refreshUser check")
+      if (IS_DEVELOPMENT) {
+        console.log("[PersistLogin] User just logged in, skipping refreshUser check")
+      }
     }
     userRef.current = user
   }, [user])
@@ -28,7 +32,9 @@ const PersistLogin = () => {
     const GRACE_PERIOD_MS = 5000
     
     if (user && timeSinceLogin < GRACE_PERIOD_MS) {
-      console.log(`[PersistLogin] User just logged in (${timeSinceLogin}ms ago), skipping refreshUser`)
+      if (IS_DEVELOPMENT) {
+        console.log(`[PersistLogin] User just logged in (${timeSinceLogin}ms ago), skipping refreshUser`)
+      }
       setPersistDone(true)
       return
     }

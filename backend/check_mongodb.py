@@ -4,8 +4,8 @@ Script to check MongoDB connection and verify data.
 Run from backend directory: python check_mongodb.py
 
 The script reads MONGO_URI from .env file or environment variables.
-If running locally (outside Docker), ensure .env has:
-  MONGO_URI=mongodb://admin:hivepass123@localhost:27027/
+MONGO_URI should be configured in your .env file or environment variables.
+Example format: mongodb://username:password@host:port/
 """
 
 import os
@@ -179,8 +179,8 @@ def check_mongodb():
     except Exception as e:
         logger.error(f"Error checking MongoDB: {str(e)}")
         print(f"\n✗ Error: {str(e)}")
-        print("\n💡 TIP: If MongoDB is running locally, ensure your .env file has:")
-        print("   MONGO_URI=mongodb://admin:hivepass123@localhost:27027/")
+        print("\n💡 TIP: Ensure your .env file has MONGO_URI configured:")
+        print("   MONGO_URI=mongodb://username:password@host:port/")
         print("\n   Or run MongoDB via Docker Compose and use the Docker hostname.")
         return False
 

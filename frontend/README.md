@@ -26,7 +26,7 @@ The frontend stack for Hive includes the following key technologies:
 - **React:** Used for building the component-based UI.
 - **React Router:** Manages client-side navigation and routing.
 - **Redux Toolkit & Redux:** Manages global state, especially for user sessions and complex UI logic.
-- **React Query:** Handles asynchronous data fetching and caching for server state.
+- **Axios:** Handles HTTP requests to the backend API with interceptors for token refresh.
 - **Tailwind CSS:** Provides utility-first styling for a responsive design.
 - **Jest & React Testing Library:** Used for unit and integration testing.
 - **Cypress:** Provides end-to-end testing capabilities.

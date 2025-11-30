@@ -1,7 +1,16 @@
 
-# Hive Backend
+# Hive Backend API
 
-Hive is a news platform backend built with Flask and MongoDB. This repository contains the API, business logic, data access layers, and supporting utilities for the Hive system.
+## Overview
+
+The Hive Backend is a secure, RESTful API designed to demonstrate robust architecture and security patterns. While it serves as the backend for the Hive Article Platform, its primary focus is showcasing:
+
+- **Layered Architecture**: Strict separation of Routes, Services, and Repositories.
+- **Security**: JWT authentication (HttpOnly), Rate Limiting, and Security Headers.
+- **Validation**: Pydantic-based request validation.
+- **Scalability**: Application Factory pattern and MongoDB integration.
+
+This repository contains the API, business logic, data access layers, and supporting utilities.
 
 ## Project Structure
 
@@ -164,14 +173,6 @@ To run tests using PowerShell, follow these steps:
    PS> coverage run --source=. -m unittest discover -s __tests__ --failfast
    PS> coverage report -m
    ```
-
-### Continuous Integration
-
-CI/CD pipeline to be implemented. Future integration will include:
-- Automated test execution from the `__tests__` directory
-- Environment variable configuration (e.g., `TESTING`, `LOG_LEVEL`)
-- Code coverage reporting and enforcement
-- Automated deployment workflows
 
 ## License
 

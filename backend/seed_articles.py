@@ -4,8 +4,8 @@ Script to seed the database with fake articles for testing.
 Run from backend directory: python seed_articles.py
 
 The script reads MONGO_URI from .env file or environment variables.
-If running locally (outside Docker), ensure .env has:
-  MONGO_URI=mongodb://admin:hivepass123@localhost:27027/
+MONGO_URI should be configured in your .env file or environment variables.
+Example format: mongodb://username:password@host:port/
 """
 
 from datetime import datetime, timezone, timedelta
@@ -651,8 +651,8 @@ if __name__ == "__main__":
         print("-" * 50)
         print("Seeding failed!")
         if "getaddrinfo failed" in str(e) or "mongodb:" in str(e).lower():
-            print("\n💡 TIP: If MongoDB is running locally, ensure your .env file has:")
-            print("   MONGO_URI=mongodb://admin:hivepass123@localhost:27027/")
+            print("\n💡 TIP: Ensure your .env file has MONGO_URI configured:")
+            print("   MONGO_URI=mongodb://username:password@host:port/")
             print("\n   Or run MongoDB via Docker Compose and use the Docker hostname.")
         raise
 

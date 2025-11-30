@@ -162,7 +162,8 @@ npx prettier --config .prettierrc --write .
      - Confirmation you’ve run lint checks and resolved issues.
 
 5. **Code Review and Merge**  
-   - The CI pipeline will run lint checks automatically on your PR.
+   - Once we implement a CI pipeline, it will run lint checks automatically.
+   - For now, please ensure all checks pass locally before merging.
    - If any checks fail, please address them before merging.
 
 ---
